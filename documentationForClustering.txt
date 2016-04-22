@@ -1,0 +1,17 @@
+
+
+GLongitude
+	Angle eastwards from the green which mean.
+	[-180, 180]
+Zoom level
+	The higher the zoom level, the further we zoom in.
+	Zoom level z in [0, inf).
+	
+Pixel space
+	Independent of zoom level.
+	How do we translate pixels to latitudes and longitudes?
+	At zoom level 0: 256 pixels is 360 degrees latitude.
+
+	
+Viewport space
+	pixels
