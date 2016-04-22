@@ -1,0 +1,186 @@
+﻿@model TonsOfGoldPerCountry.Web.Models.HomeIndexViewModel
+@{
+    ViewBag.Title = "Home Page";
+}
+
+@*<div class="jumbotron">
+    <h1>ASP.NET</h1>
+    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
+    <p><a href="http://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Getting started</h2>
+        <p>
+            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
+            enables a clean separation of concerns and gives you full control over markup
+            for enjoyable, agile development.
+        </p>
+        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Get more libraries</h2>
+        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
+        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Web Hosting</h2>
+        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
+        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
+    </div>
+</div>*@
+
+@section header {
+    <style>
+    #map {
+        position: absolute;
+        left: 0;
+        top: 50px;
+        bottom: 20px;
+        right: 0;
+    }
+    .tons-of-gold-view {
+        position: absolute;
+        background-color: yellow;
+    }
+    </style>
+}
+<div id="map"></div>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBY4KasPf2YbsBUoucQJjCDhaF27YgXQg"></script>
+<script src="~/Scripts/fixes.js"></script>
+<script>
+    function CountryViewModel(code, latitude, longitude, name) {
+        this.__code = code;
+        this.__gLatLng = new google.maps.LatLng(latitude, longitude);
+        this.__name = name;
+    }
+    CountryViewModel.prototype = {
+        getCode: function() {
+            return this.__code;
+        },
+        getGLatLng: function () {
+            return this.__gLatLng;
+        },
+        getName: function () {
+            return this.__name;
+        }
+    };
+
+
+    function MyApp() {
+
+        var i, n;
+        this.__countryViewModels = [
+            @for (int i = 0, iLast = Model.Countries.Count - 1; i <= iLast; i++)
+            {
+                var country = Model.Countries[i];
+                @Html.Raw($"new CountryViewModel(\"{Ajax.JavaScriptStringEncode(country.Code)}\"," +
+                    $"{country.Latitude.ToString("R", System.Globalization.NumberFormatInfo.InvariantInfo)}," +
+                    $"{country.Longitude.ToString("R", System.Globalization.NumberFormatInfo.InvariantInfo)}," +
+                    $"\"{Ajax.JavaScriptStringEncode(country.Name)}\")");
+                if (i < iLast)
+                {
+                    @Html.Raw(",");
+                }
+            }
+        ];
+        this.__gmap = new google.maps.Map(document.getElementById('map'), {
+            zoom: 5,
+            center: new google.maps.LatLng(0, 0),
+            mapTypeId: "OSM",
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+ 
+        //Define OSM map type pointing at the OpenStreetMap tile server
+        this.__gmap.mapTypes.set("OSM", new google.maps.ImageMapType({
+            getTileUrl: function(coord, zoom) {
+                // "Wrap" x (logitude) at 180th meridian properly
+                // NB: Don't touch coord.x because coord param is by reference, and changing its x property breakes something in Google's lib 
+                var tilesPerGlobe = 1 << zoom;
+                var x = coord.x % tilesPerGlobe;
+                if (x < 0) {
+                    x = tilesPerGlobe+x;
+                }
+                // Wrap y (latitude) in a like manner if you want to enable vertical infinite scroll
+
+                return "http://tile.openstreetmap.org/" + zoom + "/" + x + "/" + coord.y + ".png";
+            },
+            tileSize: new google.maps.Size(256, 256),
+            name: "OpenStreetMap",
+            maxZoom: 18
+        }));
+
+        n = this.__countryViewModels.length;
+        this.__tonsOfGoldViews = new Array(n);
+        for (i = 0 ; i < n; i++) {
+            this.__tonsOfGoldViews[i] = new TonsOfGoldView(this.__gmap, this.__countryViewModels[i].getGLatLng());
+        }
+    }
+
+    var TonsOfGoldView_width = 20;
+    var TonsOfGoldView_baseHeight = 20;
+    function TonsOfGoldView(gmap, centerLatLng) {
+        if (!(gmap instanceof google.maps.Map)) throw Error();
+        if (!(centerLatLng instanceof google.maps.LatLng)) throw Error();
+        this.__div1 = null;
+        this.__centerLatLng = centerLatLng;
+        this.__gmap = gmap;
+        this.__gmov = new TonsOfGoldView_GMapsOverlayView(this);
+        this.__gmov.setMap(this.__gmap);
+    }
+    TonsOfGoldView.prototype = {
+        __getHeight_computed: function() {
+            return TonsOfGoldView_baseHeight;
+        },
+        __gmov_draw: function () {
+            var proj, pixelCenter_gmp, height, width;
+            proj = this.__gmov.getProjection();
+            pixelCenter_gmp = proj.fromLatLngToDivPixel(this.__centerLatLng);
+            height = this.__getHeight_computed();
+            width = TonsOfGoldView_width;
+            x.setOwnSrcPropsOnDst({
+                left: x.formatNumberForOldCss(pixelCenter_gmp.x - width * 0.5) + "px",
+                top: x.formatNumberForOldCss(pixelCenter_gmp.y - (height - TonsOfGoldView_baseHeight * 0.5)) + "px",
+                width: x.formatNumberForOldCss(width) + "px",
+                height: x.formatNumberForOldCss(height) + "px"
+            }, this.__div1.style);
+        },
+        __gmov_onAdd: function () {
+            var p;
+            if (this.__div1 === null) {
+                this.__div1 = document.createElement("div");
+                this.__div1.className = "tons-of-gold-view";
+            }
+            p = this.__gmov.getPanes();
+            p.overlayMouseTarget.appendChild(this.__div1);
+        },
+        __gmov_onRemove: function () {
+            var p;
+            p = this.__gmov.getPanes();
+            p.overlayMouseTarget.removeChild(this.__div1);
+        }
+    };
+
+    function TonsOfGoldView_GMapsOverlayView(tonsOfGoldView) {
+        google.maps.OverlayView.call(this);
+        this.__tonsOfGoldView = tonsOfGoldView;
+    }
+    TonsOfGoldView_GMapsOverlayView.prototype = x.setOwnSrcPropsOnDst({
+        constructor: TonsOfGoldView_GMapsOverlayView,
+        draw: function () {
+            this.__tonsOfGoldView.__gmov_draw();
+        },
+        onAdd: function () {
+            this.__tonsOfGoldView.__gmov_onAdd();
+        },
+        onRemove: function () {
+            this.__tonsOfGoldView.__gmov_onRemove();
+        }
+    }, Object.create(google.maps.OverlayView.prototype));
+
+
+    var myApp = new MyApp();
+
+</script>
