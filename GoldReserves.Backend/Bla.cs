@@ -7,9 +7,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace TonsOfGoldPerCountry.Backend
+namespace GoldReserves.Backend
 {
     public class Bla
     {
@@ -43,6 +42,7 @@ namespace TonsOfGoldPerCountry.Backend
                 throw new NotImplementedException();
             }
         }
+
         private class CountryCsvClassMap : CsvClassMap<Country>
         {
             public CountryCsvClassMap()
@@ -53,7 +53,6 @@ namespace TonsOfGoldPerCountry.Backend
                 Map(c => c.Name).Name("name");
             }
         }
-
 
         public List<Country> GetCountries()
         {

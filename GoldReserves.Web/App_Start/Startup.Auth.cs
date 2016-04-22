@@ -5,9 +5,9 @@ using Microsoft.Owin;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.Google;
 using Owin;
-using TonsOfGoldPerCountry.Web.Models;
+using GoldReserves.Web.Models;
 
-namespace TonsOfGoldPerCountry.Web
+namespace GoldReserves.Web
 {
     public partial class Startup
     {

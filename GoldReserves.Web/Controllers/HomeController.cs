@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using TonsOfGoldPerCountry.Backend;
-using TonsOfGoldPerCountry.Web.Models;
+using GoldReserves.Backend;
+using GoldReserves.Web.Models;
 
-namespace TonsOfGoldPerCountry.Web.Controllers
+namespace GoldReserves.Web.Controllers
 {
     public class HomeController : Controller
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace TonsOfGoldPerCountry.Web.Models
+namespace GoldReserves.Web.Models
 {
     public class ExternalLoginConfirmationViewModel
     {

@@ -7,8 +7,8 @@
     <ProjectGuid>{300C791C-6806-47B2-9B54-AB066843F5A2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TonsOfGoldPerCountry.Backend</RootNamespace>
-    <AssemblyName>TonsOfGoldPerCountry.Backend</AssemblyName>
+    <RootNamespace>GoldReserves.Backend</RootNamespace>
+    <AssemblyName>GoldReserves.Backend</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

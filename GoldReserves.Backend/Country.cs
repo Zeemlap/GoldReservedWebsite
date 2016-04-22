@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TonsOfGoldPerCountry.Backend
+namespace GoldReserves.Backend
 {
     public class Country
     {

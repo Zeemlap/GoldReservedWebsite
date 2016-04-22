@@ -13,8 +13,8 @@
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TonsOfGoldPerCountry.Web</RootNamespace>
-    <AssemblyName>TonsOfGoldPerCountry.Web</AssemblyName>
+    <RootNamespace>GoldReserves.Web</RootNamespace>
+    <AssemblyName>GoldReserves.Web</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>true</UseIISExpress>
@@ -255,7 +255,7 @@
     <Content Include="Scripts\jquery-1.10.2.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TonsOfGoldPerCountry.Backend\TonsOfGoldPerCountry.Backend.csproj">
+    <ProjectReference Include="..\GoldReserves.Backend\GoldReserves.Backend.csproj">
       <Project>{300c791c-6806-47b2-9b54-ab066843f5a2}</Project>
       <Name>TonsOfGoldPerCountry.Backend</Name>
     </ProjectReference>

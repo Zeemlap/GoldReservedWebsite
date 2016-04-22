@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Mvc;
 
-namespace TonsOfGoldPerCountry.Web
+namespace GoldReserves.Web
 {
     public class FilterConfig
     {

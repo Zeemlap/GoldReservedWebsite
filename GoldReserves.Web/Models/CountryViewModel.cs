@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace TonsOfGoldPerCountry.Web.Models
+namespace GoldReserves.Web.Models
 {
     public class CountryViewModel
     {

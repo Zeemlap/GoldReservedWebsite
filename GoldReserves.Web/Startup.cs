@@ -1,8 +1,8 @@
 ﻿using Microsoft.Owin;
 using Owin;
 
-[assembly: OwinStartupAttribute(typeof(TonsOfGoldPerCountry.Web.Startup))]
-namespace TonsOfGoldPerCountry.Web
+[assembly: OwinStartupAttribute(typeof(GoldReserves.Web.Startup))]
+namespace GoldReserves.Web
 {
     public partial class Startup
     {

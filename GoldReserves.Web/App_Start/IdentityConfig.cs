@@ -10,9 +10,9 @@ using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
-using TonsOfGoldPerCountry.Web.Models;
+using GoldReserves.Web.Models;
 
-namespace TonsOfGoldPerCountry.Web
+namespace GoldReserves.Web
 {
     public class EmailService : IIdentityMessageService
     {

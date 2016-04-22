@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TonsOfGoldPerCountry.Web.Models
+namespace GoldReserves.Web.Models
 {
     public class HomeIndexViewModel
     {

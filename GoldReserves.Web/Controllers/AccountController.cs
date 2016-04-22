@@ -8,9 +8,9 @@ using System.Web.Mvc;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
-using TonsOfGoldPerCountry.Web.Models;
+using GoldReserves.Web.Models;
 
-namespace TonsOfGoldPerCountry.Web.Controllers
+namespace GoldReserves.Web.Controllers
 {
     [Authorize]
     public class AccountController : Controller
