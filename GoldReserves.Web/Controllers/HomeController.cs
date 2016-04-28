@@ -25,13 +25,6 @@ namespace GoldReserves.Web.Controllers
                                 }).ToList();
             return View(new HomeIndexViewModel() { Countries = countryList2, });
         }
-
-        [ChildActionOnly]
-        public ActionResult CountryGeoData(string format)
-        {
-            if (!"topojson".Equals(format, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException();
-            return File(Url.Content("~/Content/countryGeoData.json"), "application/json; charset=UTF-8");
-        }
         
         public ActionResult About()
         {

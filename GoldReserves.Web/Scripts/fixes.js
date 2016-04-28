@@ -2,18 +2,23 @@
 
     var g;
     var hasOwnPropF;
+    var isFinite;
     var isPojo;
     var Object;
     var Object_prototype;
     var Object_prototype_toString;
     var Object_getPrototypeOf;
     var x;
+    var XMLNS_SVG = "http://www.w3.org/2000/svg";
+    var PI_OVER_180;
 
     g = window;
+    isFinite = g.isFinite;
     Object = g.Object;
     Object_prototype = Object.prototype;
     Object_prototype_toString = Object_prototype.toString;
     hasOwnPropF = Object_prototype.hasOwnProperty;
+    PI_OVER_180 = Math.PI / 180;
 
     function isObject(value) {
         return typeof value === "object" && value !== null;
@@ -102,16 +107,191 @@
         return true;
     }
 
-    
+    function isDouble_finite(value) {
+        return typeof value === "number" && isFinite(value);
+    }
+    function isDouble_integral(value) {
+        return typeof value === "number" && value % 1 === 0;
+    }
+
+    function __areDoublesEqual(x, y) {
+        return x === y || (x !== x && y !== y);
+    }
+
+    function Vector2(x, y) {
+        var argN;
+        argN = arguments.length;
+        if (argN == 0) {
+            x = y = 0;
+        } else if (1 < argN) {
+            if (typeof x !== "number") throw Error();
+            if (typeof y !== "number") throw Error();
+        } else {
+            if (x == null || x.constructor !== Vector2) throw Error();
+            y = x.__y;
+            x = x.__x;
+        }
+        this.__x = x;
+        this.__y = y;
+    }
+    Vector2.prototype = {
+        constructor: Vector2,
+        assign: function(x, y) {
+            var argN;
+            argN = arguments.length;
+            if (1 < argN) {
+                if (typeof x !== "number"
+                    || typeof y !== "number") throw Error();
+            } else if (1 === argN) {
+                if (x == null || x.constructor !== Vector2) throw Error();
+                y = x.__y;
+                x = x.__x;
+            } else {
+                throw Error();
+            }
+            this.__x = x;
+            this.__y = y;
+            return this;
+        },
+        equals: function (o) {
+            if (o == null || o.constructor !== Vector2) return false;
+            return __areDoublesEqual(v.__x, o.__x) && __areDoublesEqual(v.__y, o.__y);
+        },
+        getX: function () {
+            return this.__x;
+        },
+        getY: function () {
+            return this.__y;
+        },
+        setX: function (value) {
+            if (typeof value !== "number") throw Error();
+            this.__x = value;
+        },
+        setY: function (value) {
+            if (typeof value !== "number") throw Error();
+            this.__y = value;
+        }
+    };
+
+    function getViewportSize() {
+        var w, h;
+        w = g.innerWidth;
+        h = g.innerHeight;
+        if (isDouble_finite(w) && isDouble_finite(h) && 0 <= w && 0 <= h) {
+            return new Vector2(w, h);
+        }
+        throw Error();
+    }
+
+    function Rect2D(xmin, xmax, ymin, ymax) {
+        var argN;
+        argN = arguments.length;
+        if (1 < argN) {
+            if (typeof xmin !== "number" || xmin !== xmin
+                || typeof xmax !== "number" || xmax !== xmax 
+                || typeof ymin !== "number" || ymin !== ymin
+                || typeof ymax !== "number" || ymax !== ymax
+                || xmax < xmin
+                || ymax < ymin) {
+                throw Error();
+            }
+        } else if (1 === argN) {
+            if (!(xmin instanceof Rect2D)) throw Error();
+            xmax = xmin.__xmax;
+            ymin = xmin.__ymin;
+            ymax = xmin.__ymax;
+            xmin = xmin.__xmin;
+        } else {
+            xmax = 0;
+            xmin = 1;
+            ymax = 0;
+            ymin = 1;
+        }
+        this.__xmin = xmin;
+        this.__xmax = xmax;
+        this.__ymin = ymin;
+        this.__ymax = ymax;
+    }
+    Rect2D.prototype = {
+        constructor: Rect2D,
+        assign: function (xmin, xmax, ymin, ymax) {
+            var argN;
+            argN = arguments.length;
+            if (1 < argN) {
+                if (typeof xmin !== "number" || xmin !== xmin
+                    || typeof xmax !== "number" || xmax !== xmax 
+                    || typeof ymin !== "number" || ymin !== ymin
+                    || typeof ymax !== "number" || ymax !== ymax
+                    || xmax < xmin
+                    || ymax < ymin) {
+                    throw Error();
+                }
+            } else {
+                if (!(xmin instanceof Rect2D)) throw Error();
+                xmax = xmin.__xmax;
+                ymin = xmin.__ymin;
+                ymax = xmin.__ymax;
+                xmin = xmin.__xmin;
+            }
+            this.__xmin = xmin;
+            this.__ymin = ymin;
+            this.__xmax = xmax;
+            this.__ymax = ymax;
+            return this;
+        },
+        contains: function (x, y) {
+            var argN;
+            argN =  arguments.length;
+            if (1 < argN) {
+                if (typeof x !== "number" || typeof y !== "number") throw Error();
+            } else {
+                if (!(x instanceof Vector2)) throw Error();
+                y = x.__y;
+                x = x.__x;
+            }
+            if (!isFinite(x) || !isFinite(y)) return false;
+            return this.__xmin <= x && x <= this.__xmax
+                && this.__ymin <= y && y <= this.__ymax;
+        },
+        equals: function (o) {
+            if (o == null || o.constructor !== Rect2D) return false;
+            return this.__xmin === o.__xmin
+                && this.__xmax === o.__xmax
+                && this.__ymin === o.__ymin
+                && this.__ymax === o.__ymax;
+        },
+        getIsEmpty: function () {
+            return this.__xmax < this.__xmin;
+        },
+        getXMin: function () {
+            return this.__xmin;
+        },
+        getYMin: function () {
+            return this.__ymin;
+        },
+        getXMax: function () {
+            return this.__xmax;
+        },
+        getYMax: function () {
+            return this.__ymax;
+        }
+    };
+
 
     setOwnSrcPropsOnDst({
         formatNumberForOldCss: formatNumberForOldCss,
+        getViewportSize: getViewportSize,
         isArray: isArray,
         isArrayLike: isArrayLike,
         isArrayLike_nonSparse: isArrayLike_nonSparse,
+        isDouble_finite: isDouble_finite,
+        isDouble_integral: isDouble_integral,
         isObject: isObject,
         isPojo: isPojo,
-        setOwnSrcPropsOnDst: setOwnSrcPropsOnDst
+        PI_OVER_180: PI_OVER_180,
+        Rect2D: Rect2D, 
+        setOwnSrcPropsOnDst: setOwnSrcPropsOnDst,
+        Vector2: Vector2
     }, x);
 
     function HostElement_childNodes_clear(he) {
@@ -134,11 +314,11 @@
         if (!hasOwnPropF.call(options, "type") || typeof (type = options.type) !== "string") {
             throw Error();
         }
-        svgHostElement = document.createElementNS("http://www.w3.org/2000/svg", type);
+        svgHostElement = document.createElementNS(XMLNS_SVG, type);
         for (i in options) {
             if (!hasOwnPropF.call(options, i)) break;
             switch (i) {
-                case "tagName": continue;
+                case "type": continue;
             }
             svgHostElement.setAttribute(i, options[i]);
         }
@@ -146,7 +326,8 @@
     }
 
     setOwnSrcPropsOnDst({
-        SvgHostElement_create: SvgHostElement_create
+        SvgHostElement_create: SvgHostElement_create,
+        XMLNS_SVG: XMLNS_SVG
     }, x);
 
 })();
