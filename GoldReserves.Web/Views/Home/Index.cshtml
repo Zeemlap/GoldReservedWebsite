@@ -6,348 +6,135 @@
 <script src="~/Scripts/topojson.v1.js"></script>
 <script src="~/Scripts/ieee754FloatingPointUtilities.js"></script>
 <script src="~/Scripts/geo.js"></script>
+<script src="~/Scripts/appGeoMap.js"></script>
 <style>
-#map > svg {
-    overflow: visible;
-}
+    #mapPosStatic {
+        margin-top: 5px;
+    }
 </style>
 }
-<div id="map"></div>
+<div id="mapPosStatic">
+    <div id="mapPosAbs">
+    </div>
+</div>
 <script>
     (function () {
-        var hasOwnPropF;
-        var g;
-        var abs;
-        var isFinite;
-        var topoJsonLib;
-        var Vector2;
-        var LatLng;
-        var PI_OVER_180;
+        var g, x, Country, topoJsonLib, ArrayLike_findIndex;
         g = this;
-        PI_OVER_180 = g.x.PI_OVER_180;
-        isFinite = g.isFinite;
-        Vector2 = g.x.Vector2;
-        LatLng = g.x.LatLng;
-        hasOwnPropF = g.Object.prototype.hasOwnProperty;
+        x = g.x;
+        ArrayLike_findIndex = x.ArrayLike_findIndex;
+        Country = x.Country;
         topoJsonLib = g.topojson;
-        abs = g.Math.abs;
 
-        function CountryViewModel(code, latitude, longitude, name) {
-            this.__code = code;
-            this.__lat = latitude;
-            this.__lng = longitude;
-            this.__name = name;
+        function registerCountries() {
+            var c, a;
+            @{
+                int n = Model.Countries.Count;
+                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});");
+                for (int i = 0; i < n; i++)
+                {
+                    var country = Model.Countries[i];
+                    @Html.Raw("c=new Country();" +
+                        $"c.__setId_isoTwoLetterCode(\"{Ajax.JavaScriptStringEncode(country.Id_IsoTwoLetterCode)}\");" +
+                        $"c.__setId_isoThreeLetterCode(\"{Ajax.JavaScriptStringEncode(country.Id_IsoThreeLetterCode)}\");" +
+                        $"c.__setName_english(\"{Ajax.JavaScriptStringEncode(country.Name_English)}\");" +
+                        $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}] = c;");
+                }
+            }
+            x.Country.__registerAll(a);
+        }
+        registerCountries();
+
+        function fixCountryGeoJson_features(fa) {
+            var i, j;
+            i = ArrayLike_findIndex(fa, function (f) { return f.properties.name === "Antarctica"; });
+            if (0 <= i) fa.splice(i, 1);
+            return fa;
+        }
+
+        function CountryViewModel(country, resourceQuantity, color) {
+            this.__country = country;
+            this.__resourceQuantity = resourceQuantity;
+            this.__color = color;
         }
         CountryViewModel.prototype = {
-            getCode: function () {
-                return this.__code;
+            getCountry: function () {
+                return this.__country;
             },
-            getLatitude: function () {
-                return this.__lat;
+            getResourceQuantity: function () {
+                return this.__resourceQuantity;
             },
-            getLongitude: function () {
-                return this.__lng;
-            },
-            getName: function () {
-                return this.__name;
-            }
-        };
-
-        function MinMax2D() {
-            this.__minx = 1 / 0;
-            this.__maxx = -1 / 0;
-            this.__miny = 1 / 0;
-            this.__maxy = -1 / 0;
-        }
-
-        function GeoProjectionContext(geoProj) {
-            this.__geoProj = geoProj;
-            this.__requiredLngSign = null;
-        }
-        GeoProjectionContext.prototype = {
-            project: function (latLng, v) {
-                // requiredLngSign is null, -1 or 1
-                var lng;
-                lng = latLng.getLng();
-                if (this.__requiredLngSign !== null) {
-                    if (this.__requiredLngSign < 0) {
-                        if (0 <= lng) lng -= 360;
-                    } else {
-                        if (lng < 0) lng += 360;
-                    }
-                }
-                this.__geoProj.project(latLng.getLat(), lng, v);
-            },
-            __updateForFeature: function (feature) {
-                switch (feature.id) {
-                    case "FJI":
-                        this.__requiredLngSign = 1;
-                        break;
-                    case "RUS":
-                        this.__requiredLngSign = 1;
-                        break;
-                    default:
-                        this.__requiredLngSign = null;
-                }
-            }
-        };
-
-        function vector2ToPathData(v) {
-            return v.getX() + "," + v.getY();
-        }
-        function AppGeoMap(heRoot) {
-            this.__he_root = heRoot;
-            this.__he_svgRoot = x.SvgHostElement_create({
-                type: "svg",
-                xmlns: x.XMLNS_SVG,
-                version: "1.1",
-                "class": "app-geo-map"
-            });
-            this.__he_svgGRoot = x.SvgHostElement_create({
-                type: "g"
-            });
-            this.__aspectRatio = 0 / 0;
-            this.__he_svgRoot.appendChild(this.__he_svgGRoot);
-            this.__geoProj = x.NaturalEarthProjection.getInstance();
-            this.__updateSize();
-            heRoot.appendChild(this.__he_svgRoot);
-        }
-        AppGeoMap.prototype = {
-            addTopoJsonToLayer1: function (topoJson, topoJsonObject, featureFunc) {
-                var featureArray, feature;
-                var i, n;
-                var geometry;
-                var hePath;
-                var pathData, j, o;
-                var heG;
-                var minMax2D;
-                var geoProjContext;
-                if (this.__aspectRatio !== this.__aspectRatio) throw Error(); // not supported multiple maps (aspectRatio needs to be kept per map)
-                heG = x.SvgHostElement_create({
-                    type: "g"
-                });
-                x.setOwnSrcPropsOnDst({
-                    stroke: "black",
-                    "stroke-width": "0.01",
-                    fill: "none"
-                }, heG.style);
-                geoProjContext = new GeoProjectionContext(this.__geoProj);
-                featureArray = topoJsonLib.feature(topoJson, topoJsonObject).features;
-                n = featureArray.length;
-                for (i = 0; i < n; i++) {
-                    feature = featureArray[i];
-                    if (!featureFunc(feature)) continue;
-                    geoProjContext.__updateForFeature(feature);
-                    geometry = feature.geometry;
-                    switch (geometry.type) {
-                        case "MultiPolygon":
-                            o = geometry.coordinates.length;
-                            pathData = "";
-                            for (j = 0; j < o; j += 1) {
-                                pathData += this.__geoJsonPolygonToPathData(geoProjContext, geometry.coordinates[j]);
-                            }
-                            break;
-                        case "Polygon":
-                            pathData = this.__geoJsonPolygonToPathData(geoProjContext, geometry.coordinates);
-                            break;
-                        default:
-                            throw Error();
-                    }
-                    hePath = x.SvgHostElement_create({
-                        type: "path",
-                        id: feature.properties.name + "",
-                        d: pathData
-                    });
-                    heG.appendChild(hePath);
-                }
-                minMax2D = new MinMax2D();
-                for (i = 0; i < n; i++) {
-                    feature = featureArray[i];
-                    if (!featureFunc(feature)) continue;
-                    geoProjContext.__updateForFeature(feature);
-                    geometry = feature.geometry;
-                    switch (geometry.type) {
-                        case "MultiPolygon":
-                            o = geometry.coordinates.length;
-                            for (j = 0; j < o; j += 1) {
-                                this.__geoJsonPolygonUpdateMinMax2D(geoProjContext, geometry.coordinates[j], minMax2D);
-                            }
-                            break;
-                        case "Polygon":
-                            this.__geoJsonPolygonUpdateMinMax2D(geoProjContext, geometry.coordinates, minMax2D);
-                            break;
-                        default:
-                            throw Error();
-                    }
-                }
-                if (minMax2D.__minx === 1 / 0
-                    || minMax2D.__maxx === -1 / 0
-                    || minMax2D.__miny === 1 / 0
-                    || minMax2D.__maxy === -1 / 0) {
-                    throw Error();
-                }
-                var xExtent = minMax2D.__maxx - minMax2D.__minx;
-                var yExtent = minMax2D.__maxy - minMax2D.__miny;
-                var sx = 1 / xExtent;
-                var sy = 1 / yExtent;
-                var s = Math.max(sx, sy);
-                var tx = -(xExtent * 0.5 + minMax2D.__minx);
-                var ty = -(yExtent * 0.5 + minMax2D.__miny);
-                heG.setAttribute("transform", "scale(" + s + "," + s + ") translate(" + tx + "," + ty + ")");
-                this.__aspectRatio = xExtent / yExtent;
-                this.__he_svgGRoot.appendChild(heG);
-            },
-            __geoJsonPolygonToPathData: function(geoProjContext, vArrayArray) {
-                var i, iLast;
-                var vArray;
-                var j, n;
-                var v, latLng, s;
-                n = vArrayArray.length;
-                s = "";
-                for (j = 0; j < n; j++) {
-                    vArray = vArrayArray[j];
-                    iLast = vArray.length - 1;
-                    if (iLast < 3) throw Error();
-                    if (vArray[0][0] !== vArray[iLast][0] || vArray[0][1] !== vArray[iLast][1]) throw Error();
-                    v = new Vector2();
-                    latLng = new LatLng(vArray[0][1], vArray[0][0]);
-                    geoProjContext.project(latLng, v);
-
-                    s += "M" + vector2ToPathData(v);
-                    for (i = 1; i < iLast; i++) {
-                        latLng.assign(vArray[i][1], vArray[i][0]);
-                        geoProjContext.project(latLng, v);
-                        s += " " + vector2ToPathData(v);
-                    }
-                    s += "Z";
-                }
-                return s;
-            },
-            __geoJsonPolygonUpdateMinMax2D: function (geoProjContext, vArrayArray, minMax2D) {
-                var vArray;
-                var i, r;
-                var latLng1, latLng2;
-                var v1, v2;
-                if (vArrayArray.length === 0) throw Error();
-                vArray = vArrayArray[0];
-                r = vArray.length;
-                i = 0;
-                if (1 < r) {
-                    latLng1 = new LatLng(vArray[0][1], vArray[0][0]);
-                    latLng2 = new LatLng(vArray[1][1], vArray[1][0]);
-                    v1 = new Vector2();
-                    v2 = new Vector2();
-                    while (true) {
-                        geoProjContext.project(latLng1, v1);
-                        geoProjContext.project(latLng2, v2);
-                        if (v1.getX() < v2.getX()) {
-                            if (v1.getX() < minMax2D.__minx) minMax2D.__minx = v1.getX();
-                            if (minMax2D.__maxx < v2.getX()) minMax2D.__maxx = v2.getX();
-                        } else {
-                            if (v2.getX() < minMax2D.__minx) minMax2D.__minx = v2.getX();
-                            if (minMax2D.__maxx < v1.getX()) minMax2D.__maxx = v1.getX();
-                        }
-                        if (v1.getY() < v2.getY()) {
-                            if (v1.getY() < minMax2D.__miny) minMax2D.__miny = v1.getY();
-                            if (minMax2D.__maxy < v2.getY()) minMax2D.__maxy = v2.getY();
-                        } else {
-                            if (v2.getY() < minMax2D.__miny) minMax2D.__miny = v2.getY();
-                            if (minMax2D.__maxy < v1.getY()) minMax2D.__maxy = v1.getY();
-                        }
-                        i += 2;
-                        r -= 2;
-                        if (r < 2) break;
-                        latLng1.assign(vArray[i][1], vArray[i][0]);
-                        latLng2.assign(vArray[i + 1][1], vArray[i + 1][0]);
-                    }
-                }
-                if (r === 0) return;
-                if (i === 0) {
-                    latLng1 = new LatLng(vArray[0][1], vArray[0][0]);
-                    v1 = new Vector2();
-                } else {
-                    latLng1.assign(vArray[0][1], vArray[0][0]);
-                }
-                geoProjContext.project(latLng1, v1);
-                if (v1.getX() < minMax2D.__minx) minMax2D.__minx = v1.getX();
-                else if (minMax2D.__maxx < v1.getX()) minMax2D.__maxx = v1.getX();
-                if (v1.getY() < minMax2D.__miny) minMax2D.__miny = v1.getY();
-                else if (minMax2D.__maxy < v1.getY()) minMax2D.__maxy = v1.getY();
-            },
-            notifyOfPotentialSizeChange: function () {
-                this.__updateSize();
-            },
-            
-            __updateSize: function () {
-                var w, h, sx, sy;
-                w = this.__he_root.clientWidth;
-                h = this.__he_root.clientHeight;
-                if (1 < this.__aspectRatio) {
-                    // taller than wide
-
-                } else {
-                    // wider than tall
-
-                }
-                this.__he_svgRoot.setAttribute("width", w + "");
-                this.__he_svgRoot.setAttribute("height", h + "");
-                this.__he_svgGRoot.setAttribute("transform", "scale(" + w + "," + h + ") translate(0.5, 0.5) scale(1, -1)");
+            getColor: function () {
+                return this.__color;
             }
         };
 
         function MyApp() {
             var i, n;
-            this.__countryTopographyTopoJson_xmlHttpRequest = null;
-            this.__countryTopographyTopoJson = null;
-            this.__countryViewModels = [
-            @for (int i = 0, iLast = Model.Countries.Count - 1; i <= iLast; i++)
-            {
-                        var country = Model.Countries[i];
-                        @Html.Raw($"new CountryViewModel(\"{Ajax.JavaScriptStringEncode(country.Code)}\"," +
-                            $"{country.Latitude.ToString("R", System.Globalization.NumberFormatInfo.InvariantInfo)}," +
-                            $"{country.Longitude.ToString("R", System.Globalization.NumberFormatInfo.InvariantInfo)}," +
-                            $"\"{Ajax.JavaScriptStringEncode(country.Name)}\")");
-                        if (i < iLast)
-                        {
-                            @Html.Raw(",");
-                        }
-                    }
-            ];
+            this.__countryIshTopographyTopoJson_xmlHttpRequest = null;
+            this.__countryIshTopographyTopoJson = null;
+            this.__countryViewModels = [];
             this.__lastVPSize = x.getViewportSize();
             this.__windowOnResize_func = this.__windowOnResize.bind(this);
             window.addEventListener("resize", this.__windowOnResize_func, false);
             this.__updateAppGeoMapHERootSize();
-            this.__appGeoMap = new AppGeoMap(document.getElementById("map"));
+            this.__appGeoMap = new x.AppGeoMap(document.getElementById("mapPosAbs"));
             this.__initialize();
         }
         MyApp.prototype = {
-            __getCountryTopographyTopoJson_onReadyStateChange: function () {
-                var req;
-                req = this.__countryTopographyTopoJson_xmlHttpRequest;
+            __getCountryIshTopographyTopoJson_onReadyStateChange: function () {
+                var req, countryGeoJson_features;
+                req = this.__countryIshTopographyTopoJson_xmlHttpRequest;
                 if (req.readyState !== 4) return;
-                this.__countryTopographyTopoJson_xmlHttpRequest = null;
+                this.__countryIshTopographyTopoJson_xmlHttpRequest = null;
                 if (req.status !== 200) throw Error();
-                this.__countryTopographyTopoJson = JSON.parse(req.responseText);
-                this.__appGeoMap.addTopoJsonToLayer1(
-                    this.__countryTopographyTopoJson,
-                    this.__countryTopographyTopoJson.objects["units"],
-                    function (feature) {
-                        return feature.properties.name !== "Antarctica"  ; //feature.properties.name === "Fiji";
-                    });
+
+ 
+
+                this.__countryIshTopographyTopoJson = JSON.parse(req.responseText);
+
+                countryGeoJson_features = topoJsonLib.feature(this.__countryIshTopographyTopoJson, this.__countryIshTopographyTopoJson.objects["units"]).features;
+                countryGeoJson_features = fixCountryGeoJson_features(countryGeoJson_features);
+                this.__appGeoMap.initializeCountryTopography(countryGeoJson_features);
+                this.__initializeAppGeoMapCore();
             },
             __initialize: function () {
                 var req;
                 req = new XMLHttpRequest();
-                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/countryTopographyTopoJson.json"))");
-                req.onreadystatechange = this.__getCountryTopographyTopoJson_onReadyStateChange.bind(this);
+                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/countryIshTopographyTopoJson.json"))");
+                req.onreadystatechange = this.__getCountryIshTopographyTopoJson_onReadyStateChange.bind(this);
                 req.send();
-                this.__countryTopographyTopoJson_xmlHttpRequest = req;
+                this.__countryIshTopographyTopoJson_xmlHttpRequest = req;
+            },
+            __initializeAppGeoMapCore: function() {
+                
+                var countries, i, n, cv, c, cvm, resourceQuantity,
+                    colorMap = x.ColorMap.FIVE_CLASS_ORANGE,
+                    RESOURCE_QUANTITY_MAX = 500;
+                countries = Country.getAll();
+                this.__countryViewModels = [];
+                for (i = 0, n = countries.length; i < n; i++) {
+                    c = countries[i];
+                    cv = this.__appGeoMap.getCountryView(c.getId_isoTwoLetterCode());
+                    if (cv === null) continue;
+                    resourceQuantity = Math.floor(Math.random() * (RESOURCE_QUANTITY_MAX + 1));
+                    cvm = new CountryViewModel(c, resourceQuantity, colorMap.getColor(resourceQuantity / RESOURCE_QUANTITY_MAX));
+                    this.__countryViewModels.push(cvm);
+                    cv.setFillColor(cvm.getColor());
+                }
+
             },
             __updateAppGeoMapHERootSize: function() {
-
-                var h;
-                h = this.__lastVPSize.getY() - (50 + 41 + 20 + 10 + 20);
-                document.getElementById("map").style.height = h + "px";
+                var h, he, t;
+                t = 50 + 5;
+                h = this.__lastVPSize.getY() - (t + 41 + 20 + 10 + 20);
+                document.getElementById("mapPosStatic").style.height = h + "px";
+                he = document.getElementById("mapPosAbs");
+                he.style.position = "absolute";
+                he.style.height = h + "px";
+                he.style.top = t + "px";
+                he.style.left = "0";
+                he.style.width = this.__lastVPSize.getX() + "px";
             },
             __windowOnResize: function () {
                 var vpSize;

@@ -18,10 +18,11 @@ namespace GoldReserves.Web.Controllers
                                 where !double.IsNaN(c.Latitude) && !double.IsNaN(c.Longitude)
                                 select new CountryViewModel()
                                 {
-                                    Code = c.Code,
+                                    Id_IsoTwoLetterCode = c.Id_IsoTwoLetterCode,
+                                    Id_IsoThreeLetterCode = c.Id_IsoThreeLetterCode,
                                     Latitude = c.Latitude,
                                     Longitude = c.Longitude,
-                                    Name = c.Name,
+                                    Name_English = c.Name_English,
                                 }).ToList();
             return View(new HomeIndexViewModel() { Countries = countryList2, });
         }

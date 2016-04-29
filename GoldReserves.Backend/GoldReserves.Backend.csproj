@@ -49,9 +49,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="countries.csv" />
+    <EmbeddedResource Include="countries_geo.csv" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="countries_iso.csv" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

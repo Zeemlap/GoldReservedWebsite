@@ -11,6 +11,7 @@
     var x;
     var XMLNS_SVG = "http://www.w3.org/2000/svg";
     var PI_OVER_180;
+    var doubleFloor;
 
     g = window;
     isFinite = g.isFinite;
@@ -19,9 +20,10 @@
     Object_prototype_toString = Object_prototype.toString;
     hasOwnPropF = Object_prototype.hasOwnProperty;
     PI_OVER_180 = Math.PI / 180;
+    doubleFloor = g.Math.floor;
 
     function isObject(value) {
-        return typeof value === "object" && value !== null;
+        return (typeof value === "object" && value !== null) || typeof value === "function";
     }
     if (hasOwnPropF.call(Object, "getPrototypeOf")) {
         Object_getPrototypeOf = Object.getPrototypeOf;
@@ -61,6 +63,38 @@
             dst[i] = src[i];
         }
         return dst;
+    }
+
+    // arrayLike[, arrayOffset, subarrayLength], predicateFunc[, predicateThisp]
+    function ArrayLike_findIndex(arrayLike, arrayOffset, subarrayLength, predicateFunc, predicateThisp) {
+        var argN, i, n, f;
+        argN = arguments.length;
+        if (!isArrayLike(arrayLike)) throw Error();
+        if (argN < 4) {
+            predicateFunc = arrayOffset;
+            predicateThisp = subarrayLength;
+            arrayOffset = 0;
+            subarrayLength = arrayLike.length;
+        } else {
+            i = arrayLike.length;
+            if (typeof arrayOffset !== "number" || arrayOffset < 0 || arrayOffset % 1 !== 0 || !(arrayOffset <= i)) throw Error();
+            if (typeof subarrayLength !== "number" || subarrayLength < 0 || !(subarrayLength % 1 === 0) || subarrayLength < i - arrayOffset) throw Error();
+        }
+        if (!isFunction(predicateFunc)) throw Error();
+        for (i = arrayOffset, n = arrayOffset + subarrayLength; i < n; i++) {
+            if (hasOwnPropF.call(arrayLike, i)) {
+                f = predicateFunc.call(predicateThisp, arrayLike[i]);
+                if (typeof f !== "boolean") throw Error();
+                if (f) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    function isFunction(value) {
+        return Object_prototype_toString.call(value) === "[object Function]";
     }
 
     function formatNumberForOldCss(num) {
@@ -113,6 +147,9 @@
     function isDouble_integral(value) {
         return typeof value === "number" && value % 1 === 0;
     }
+    function isDouble01(value) {
+        return typeof value === "number" && !(value < 0) && value <= 1;
+    }
 
     function __areDoublesEqual(x, y) {
         return x === y || (x !== x && y !== y);
@@ -155,7 +192,7 @@
         },
         equals: function (o) {
             if (o == null || o.constructor !== Vector2) return false;
-            return __areDoublesEqual(v.__x, o.__x) && __areDoublesEqual(v.__y, o.__y);
+            return __areDoublesEqual(this.__x, o.__x) && __areDoublesEqual(this.__y, o.__y);
         },
         getX: function () {
             return this.__x;
@@ -279,6 +316,7 @@
 
 
     setOwnSrcPropsOnDst({
+        ArrayLike_findIndex: ArrayLike_findIndex,
         formatNumberForOldCss: formatNumberForOldCss,
         getViewportSize: getViewportSize,
         isArray: isArray,
@@ -286,6 +324,8 @@
         isArrayLike_nonSparse: isArrayLike_nonSparse,
         isDouble_finite: isDouble_finite,
         isDouble_integral: isDouble_integral,
+        isDouble01: isDouble01,
+        isFunction: isFunction, 
         isObject: isObject,
         isPojo: isPojo,
         PI_OVER_180: PI_OVER_180,
@@ -304,6 +344,153 @@
     setOwnSrcPropsOnDst({
         HostElement_childNodes_clear: HostElement_childNodes_clear
     }, x);
+
+
+    function Color_bla(v) {
+        return v === 1 
+            ? "FF"
+            : doubleFloor(v * 256).toString(16);
+    }
+
+    function __Color(r, g, b, a) {
+        this.__r = r;
+        this.__g = g;
+        this.__b = b;
+        this.__a = a;
+    }
+    function Color(r, g, b, a) {
+        var argN;
+        argN = arguments.length;
+        if (1 < argN) {
+            if (!isDouble01(r)
+                || !isDouble01(g)
+                || !isDouble01(b)
+                || !isDouble01(a)) {
+                throw Error();
+            }
+        } else {
+            if (!(r instanceof Color)) {
+                throw Error();
+            }
+            g = r.__g;
+            b = r.__b;
+            a = r.__a;
+            r = r.__r;
+        }
+        this.__r = r;
+        this.__g = g;
+        this.__b = b;
+        this.__a = a;
+    }
+    Color.prototype = __Color.prototype = {
+        constructor: Color,
+        assign: function (r, g, b, a) {
+            var argN;
+            argN = arguments.length;
+            if (1 < argN) {
+                if (!isDouble01(r)
+                    || !isDouble01(g)
+                    || !isDouble01(b)
+                    || !isDouble01(a)) {
+                    throw Error();
+                }
+            } else {
+                if (!(r instanceof Color)) {
+                    throw Error();
+                }
+                g = r.__g;
+                b = r.__b;
+                a = r.__a;
+                r = r.__r;
+            }
+            this.__r = r;
+            this.__g = g;
+            this.__b = b;
+            this.__a = a;
+            return this;
+        },
+        equals: function (o) {
+            if (o == null || o.constructor !== Color) return false;
+            return this.__r === o.__r
+                && this.__g === o.__g
+                && this.__b === o.__b
+                && this.__a === o.__a;
+        },
+        getR: function () { return this.__r; },
+        getG: function () { return this.__g; },
+        getB: function () { return this.__b; },
+        getA: function () { return this.__a; },
+        toString: function (format) {
+            var argN;
+            argN = arguments.length;
+            if (argN === 0) format = "rgb_html";
+            switch (format) {
+                case "rgb_html":
+                    return "#" + Color_bla(this.__r) + Color_bla(this.__g) + Color_bla(this.__b);
+                default:
+                    throw Error();
+            }
+        }
+    };
+    Color.fromRgb = function (v) {
+        var r, g, b;
+        if (!isDouble_integral(v) || v < 0 || 0xFFFFFF < v) throw Error();
+        r = (v >> 16) / 256;
+        g = ((v >> 8) & 0xFF) / 256;
+        b = (v & 0xFF) / 256;
+        return new __Color(r, g, b, 1);
+    };
+    Color.fromArgb = function (v) {
+        var a, r, g, b;
+        if (!isDouble_integral(v) || v < 0 || 0xFFFFFFFF < v) throw Error();
+        a = (v >>> 24) / 256;
+        r = ((v >> 16) & 0xFF) / 256;
+        g = ((v >> 8) & 0xFF) / 256;
+        b = (v & 0xFF) / 256;
+        return new __Color(r, g, b, a);
+    };
+
+    function ColorMap(colors) {
+        var i, n, c;
+        if (!isArrayLike_nonSparse(colors)) {
+            throw Error();
+        }
+        n = colors.length;
+        this.__colors = new Array(n);
+        for (i = 0; i < n; i++) {
+            c = colors[i];
+            if (!(c instanceof Color)) throw Error();
+            this.__colors[i] = new Color(c);
+        }
+    }
+    ColorMap.prototype = {
+        getColor: function (v) {
+            var i, c;
+            if (!isDouble01(v)) throw Error();
+            c = this.__colors;
+            i = doubleFloor(v * c.length);
+            return i < c.length
+                ? c[i]
+                : c[i - 1];
+        }
+    };
+
+    ColorMap.FIVE_CLASS_ORANGE = new ColorMap([
+        Color.fromRgb(0xfeedde),
+        Color.fromRgb(0xfdbe85),
+        Color.fromRgb(0xfd8d3c),
+        Color.fromRgb(0xe6550d),
+        Color.fromRgb(0xa63603)
+    ]);
+    
+
+    setOwnSrcPropsOnDst({
+        Color: Color,
+        ColorMap: ColorMap
+    }, x);
+
+
+
 
     function SvgHostElement_create(options) {
         var i, type, svgHostElement;
@@ -325,8 +512,20 @@
         return svgHostElement;
     }
 
+    function SvgHostElement_setFillColorOnInlineStyle(svgHostElement, color) {
+        if (color !== null && !(color instanceof Color)) throw Error();
+        if (color !== null) {
+            svgHostElement.style.fill = color.toString("rgb_html");
+            svgHostElement.style.fillOpacity = color.getA() + "";
+        } else {
+            svgHostElement.style.fill = "";
+            svgHostElement.style.fillOpacity = "";
+        }
+    }
+
     setOwnSrcPropsOnDst({
         SvgHostElement_create: SvgHostElement_create,
+        SvgHostElement_setFillColorOnInlineStyle: SvgHostElement_setFillColorOnInlineStyle,
         XMLNS_SVG: XMLNS_SVG
     }, x);
 

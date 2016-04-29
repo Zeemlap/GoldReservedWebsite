@@ -189,10 +189,11 @@
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Scripts\appGeoMap.js" />
     <Content Include="Scripts\bla.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
-    <Content Include="Content\countryTopographyTopoJson.json" />
+    <Content Include="Content\countryIshTopographyTopoJson.json" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\fixes.js" />
     <Content Include="Scripts\geo.js" />
