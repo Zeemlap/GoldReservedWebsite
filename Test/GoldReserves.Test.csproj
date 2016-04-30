@@ -4,15 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{300C791C-6806-47B2-9B54-AB066843F5A2}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GoldReserves.Backend</RootNamespace>
-    <AssemblyName>GoldReserves.Backend</AssemblyName>
+    <RootNamespace>GoldReserves.Test</RootNamespace>
+    <AssemblyName>GoldReserves.Test</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -30,18 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CsvHelper, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
-      <HintPath>..\packages\CsvHelper.2.14.1\lib\net40\CsvHelper.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="HtmlAgilityPack, Version=1.4.9.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
-      <HintPath>..\packages\HtmlAgilityPack.1.4.9\lib\Net45\HtmlAgilityPack.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="HtmlAgilityPack.CssSelectors, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\HtmlAgilityPack.CssSelectors.1.0.0\lib\net45\HtmlAgilityPack.CssSelectors.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,27 +43,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bla.cs" />
-    <Compile Include="Country.cs" />
-    <Compile Include="HttpClientExtensions.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WorldGoldReservesReport.cs" />
-    <Compile Include="WorldGoldReservesReportEntry.cs" />
-    <Compile Include="WorldGoldReservesReportScript.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="countries_geo.csv" />
+    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="countries_iso.csv" />
-    <None Include="app.config" />
-    <None Include="packages.config" />
-    <EmbeddedResource Include="world_official_gold_holdings_as_of_april2016_ifs.xlsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GoldReserves.Workbooks\GoldReserves.Workbooks.csproj">
-      <Project>{7ee14300-fc63-41ea-b277-eee07bbcf686}</Project>
-      <Name>GoldReserves.Workbooks</Name>
+    <ProjectReference Include="..\GoldReserves.Backend\GoldReserves.Backend.csproj">
+      <Project>{300c791c-6806-47b2-9b54-ab066843f5a2}</Project>
+      <Name>GoldReserves.Backend</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

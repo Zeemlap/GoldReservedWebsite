@@ -45,6 +45,23 @@
         }
         registerCountries();
 
+        function getCountryViewModels() {
+            var c, a;
+            @{
+                n = Model.CountryViewModels.Count;
+                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});");
+                for (int i = 0; i < n; i++)
+                {
+                    var cvm = Model.CountryViewModels[i];
+                    @Html.Raw("c=new CountryViewModel();" +
+                        $"c.__setCountry(Country.get(\"{Ajax.JavaScriptStringEncode(cvm.Id_IsoTwoLetterCode)}\"));" +
+                        $"c.__setResourceQuantity({cvm.ResourceQuantity.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});" +
+                        $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}] = c;");
+                }
+            }
+            return a;
+        }
+
         function fixCountryGeoJson_features(fa) {
             var i, j;
             i = ArrayLike_findIndex(fa, function (f) { return f.properties.name === "Antarctica"; });
@@ -52,20 +69,29 @@
             return fa;
         }
 
-        function CountryViewModel(country, resourceQuantity, color) {
-            this.__country = country;
-            this.__resourceQuantity = resourceQuantity;
-            this.__color = color;
+        function CountryViewModel() {
+            this.__country = null;
+            this.__resourceQuantity = null;
+            this.__color = null;
         }
         CountryViewModel.prototype = {
             getCountry: function () {
                 return this.__country;
             },
+            __setCountry: function(value) {
+                this.__country = value;
+            },
             getResourceQuantity: function () {
                 return this.__resourceQuantity;
             },
+            __setResourceQuantity: function (value) {
+                this.__resourceQuantity = value;
+            },
             getColor: function () {
                 return this.__color;
+            },
+            __setColor: function (value) {
+                this.__color = value;
             }
         };
 
@@ -73,7 +99,7 @@
             var i, n;
             this.__countryIshTopographyTopoJson_xmlHttpRequest = null;
             this.__countryIshTopographyTopoJson = null;
-            this.__countryViewModels = [];
+            this.__countryViewModels = getCountryViewModels();
             this.__lastVPSize = x.getViewportSize();
             this.__windowOnResize_func = this.__windowOnResize.bind(this);
             window.addEventListener("resize", this.__windowOnResize_func, false);
@@ -89,7 +115,7 @@
                 this.__countryIshTopographyTopoJson_xmlHttpRequest = null;
                 if (req.status !== 200) throw Error();
 
- 
+
 
                 this.__countryIshTopographyTopoJson = JSON.parse(req.responseText);
 
@@ -107,20 +133,31 @@
                 this.__countryIshTopographyTopoJson_xmlHttpRequest = req;
             },
             __initializeAppGeoMapCore: function() {
-                
-                var countries, i, n, cv, c, cvm, resourceQuantity,
+
+                var countryViewModels, i, n;
+                var cvm, cv, t,
                     colorMap = x.ColorMap.FIVE_CLASS_ORANGE,
-                    RESOURCE_QUANTITY_MAX = 500;
-                countries = Country.getAll();
-                this.__countryViewModels = [];
-                for (i = 0, n = countries.length; i < n; i++) {
-                    c = countries[i];
-                    cv = this.__appGeoMap.getCountryView(c.getId_isoTwoLetterCode());
-                    if (cv === null) continue;
-                    resourceQuantity = Math.floor(Math.random() * (RESOURCE_QUANTITY_MAX + 1));
-                    cvm = new CountryViewModel(c, resourceQuantity, colorMap.getColor(resourceQuantity / RESOURCE_QUANTITY_MAX));
-                    this.__countryViewModels.push(cvm);
-                    cv.setFillColor(cvm.getColor());
+                    resourceQuantityMax = -1/0;
+                n = this.__countryViewModels.length;
+                for (i = 0; i < n;) {
+                    cvm = this.__countryViewModels[i];
+                    cv = this.__appGeoMap.getCountryView(cvm.getCountry().getId_isoTwoLetterCode());
+                    if (cv === null) {
+                        this.__countryViewModels.splice(i, 1);
+                        n -= 1;
+                        continue;
+                    }
+                    t = cvm.getResourceQuantity();
+                    if (resourceQuantityMax < t) {
+                        resourceQuantityMax = t;
+                    }
+                    i += 1;
+                }
+                
+                for (i = 0; i < n; i++) {
+                    cvm = this.__countryViewModels[i];
+                    cv = this.__appGeoMap.getCountryView(cvm.getCountry().getId_isoTwoLetterCode());
+                    cv.setFillColor(colorMap.getColor(cvm.getResourceQuantity() / resourceQuantityMax));
                 }
 
             },
@@ -148,5 +185,5 @@
 
         new MyApp();
     })();
-    
+
 </script>

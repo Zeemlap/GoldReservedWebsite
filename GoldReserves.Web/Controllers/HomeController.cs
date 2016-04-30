@@ -13,18 +13,24 @@ namespace GoldReserves.Web.Controllers
         public ActionResult Index()
         {
 
-            var countryList1 = new Bla().GetCountries();
-            var countryList2 = (from c in countryList1
-                                where !double.IsNaN(c.Latitude) && !double.IsNaN(c.Longitude)
-                                select new CountryViewModel()
-                                {
-                                    Id_IsoTwoLetterCode = c.Id_IsoTwoLetterCode,
-                                    Id_IsoThreeLetterCode = c.Id_IsoThreeLetterCode,
-                                    Latitude = c.Latitude,
-                                    Longitude = c.Longitude,
-                                    Name_English = c.Name_English,
-                                }).ToList();
-            return View(new HomeIndexViewModel() { Countries = countryList2, });
+            var countryList = new Bla().GetCountries();
+            var report = new Bla().GetWorldGoldReservesReportAsync().Result;
+            var entryFromName = report.Entries.ToDictionary(e => e.EntryName);
+            var countryViewModelList = new List<CountryViewModel>();
+            foreach (var country in countryList)
+            {
+                WorldGoldReservesReportEntry e;
+                entryFromName.TryGetValue(country.Name_English, out e);
+                if (e != null)
+                {
+                    countryViewModelList.Add(new CountryViewModel()
+                    {
+                        Id_IsoTwoLetterCode = country.Id_IsoTwoLetterCode,
+                        ResourceQuantity = (double)e.Tons,
+                    });
+                }
+            }
+            return View(new HomeIndexViewModel() { Countries = countryList, CountryViewModels = countryViewModelList, });
         }
         
         public ActionResult About()

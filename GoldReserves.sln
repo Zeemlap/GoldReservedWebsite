@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Web", "GoldRes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Backend", "GoldReserves.Backend\GoldReserves.Backend.csproj", "{300C791C-6806-47B2-9B54-AB066843F5A2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Test", "Test\GoldReserves.Test.csproj", "{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Workbooks", "GoldReserves.Workbooks\GoldReserves.Workbooks.csproj", "{7EE14300-FC63-41EA-B277-EEE07BBCF686}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{300C791C-6806-47B2-9B54-AB066843F5A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{300C791C-6806-47B2-9B54-AB066843F5A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{300C791C-6806-47B2-9B54-AB066843F5A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EE14300-FC63-41EA-B277-EEE07BBCF686}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EE14300-FC63-41EA-B277-EEE07BBCF686}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EE14300-FC63-41EA-B277-EEE07BBCF686}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EE14300-FC63-41EA-B277-EEE07BBCF686}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

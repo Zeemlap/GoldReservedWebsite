@@ -260,7 +260,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GoldReserves.Backend\GoldReserves.Backend.csproj">
       <Project>{300c791c-6806-47b2-9b54-ab066843f5a2}</Project>
-      <Name>TonsOfGoldPerCountry.Backend</Name>
+      <Name>GoldReserves.Backend</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

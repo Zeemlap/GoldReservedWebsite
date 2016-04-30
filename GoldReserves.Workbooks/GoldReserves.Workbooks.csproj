@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{300C791C-6806-47B2-9B54-AB066843F5A2}</ProjectGuid>
+    <ProjectGuid>{7EE14300-FC63-41EA-B277-EEE07BBCF686}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GoldReserves.Backend</RootNamespace>
-    <AssemblyName>GoldReserves.Backend</AssemblyName>
+    <RootNamespace>GoldReserves.Workbooks</RootNamespace>
+    <AssemblyName>GoldReserves.Workbooks</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,20 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CsvHelper, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
-      <HintPath>..\packages\CsvHelper.2.14.1\lib\net40\CsvHelper.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="HtmlAgilityPack, Version=1.4.9.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
-      <HintPath>..\packages\HtmlAgilityPack.1.4.9\lib\Net45\HtmlAgilityPack.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="HtmlAgilityPack.CssSelectors, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\HtmlAgilityPack.CssSelectors.1.0.0\lib\net45\HtmlAgilityPack.CssSelectors.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -52,28 +41,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bla.cs" />
-    <Compile Include="Country.cs" />
-    <Compile Include="HttpClientExtensions.cs" />
+    <Compile Include="Cell.cs" />
+    <Compile Include="CellValueType.cs" />
+    <Compile Include="Drawing.cs" />
+    <Compile Include="DrawingType.cs" />
+    <Compile Include="Excel\XmlDtos.cs" />
+    <Compile Include="Paragraph.cs" />
+    <Compile Include="Row.cs" />
+    <Compile Include="Excel\ExcelWorkbookReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WorldGoldReservesReport.cs" />
-    <Compile Include="WorldGoldReservesReportEntry.cs" />
-    <Compile Include="WorldGoldReservesReportScript.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="countries_geo.csv" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="countries_iso.csv" />
-    <None Include="app.config" />
-    <None Include="packages.config" />
-    <EmbeddedResource Include="world_official_gold_holdings_as_of_april2016_ifs.xlsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GoldReserves.Workbooks\GoldReserves.Workbooks.csproj">
-      <Project>{7ee14300-fc63-41ea-b277-eee07bbcf686}</Project>
-      <Name>GoldReserves.Workbooks</Name>
-    </ProjectReference>
+    <Compile Include="TextDrawing.cs" />
+    <Compile Include="Workbook.cs" />
+    <Compile Include="Worksheet.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
