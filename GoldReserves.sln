@@ -7,9 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Web", "GoldRes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Backend", "GoldReserves.Backend\GoldReserves.Backend.csproj", "{300C791C-6806-47B2-9B54-AB066843F5A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Test", "Test\GoldReserves.Test.csproj", "{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Test", "GoldReserves.Test\GoldReserves.Test.csproj", "{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Workbooks", "GoldReserves.Workbooks\GoldReserves.Workbooks.csproj", "{7EE14300-FC63-41EA-B277-EEE07BBCF686}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldReserves.Data", "GoldReserves.Data\GoldReserves.Data.csproj", "{7BC32935-49AE-4BF4-9A03-5570F9A70AE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibCore", "..\..\Repo_GitHub_Lib\Lib\Com.Jab\LibCore\LibCore.csproj", "{507C2621-0D0B-4109-8939-BE06147540BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibOffice", "..\..\Repo_GitHub_Lib\Lib\Com.Jab\LibOffice\LibOffice.csproj", "{7EE14300-FC63-41EA-B277-EEE07BBCF686}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +33,14 @@ Global
 		{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB2F8B18-A998-42C4-B73C-CBA5BF630C49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BC32935-49AE-4BF4-9A03-5570F9A70AE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BC32935-49AE-4BF4-9A03-5570F9A70AE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BC32935-49AE-4BF4-9A03-5570F9A70AE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BC32935-49AE-4BF4-9A03-5570F9A70AE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{507C2621-0D0B-4109-8939-BE06147540BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{507C2621-0D0B-4109-8939-BE06147540BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{507C2621-0D0B-4109-8939-BE06147540BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{507C2621-0D0B-4109-8939-BE06147540BA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7EE14300-FC63-41EA-B277-EEE07BBCF686}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7EE14300-FC63-41EA-B277-EEE07BBCF686}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EE14300-FC63-41EA-B277-EEE07BBCF686}.Release|Any CPU.ActiveCfg = Release|Any CPU

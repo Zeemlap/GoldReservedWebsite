@@ -1,17 +1,17 @@
-﻿using GoldReserves.Workbooks;
+﻿using Com.Jab.LibOffice.Workbooks;
+using GoldReserves.Data;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace GoldReserves.Backend
 {
-    internal class WorldGoldReservesReportScript
+    internal class WorldOfficialGoldHoldingReportScraper
     {
         private const string urlBase = "http://www.gold.org";
         private static readonly Regex dateRegex = new Regex("^([0-9]{1,2})(st|nd|rd|th) ([^ ]+) ([0-9]+)$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -20,7 +20,7 @@ namespace GoldReserves.Backend
         private int m_isRunning;
         private Worksheet m_worksheet;
         private Func<int, string> m_getNoteFunc;
-        private WorldGoldReservesReport m_report;
+        private WorldOfficialGoldHoldingReport m_report;
 
         private static DateTime ParsePublishDate(string s)
         {
@@ -53,11 +53,11 @@ namespace GoldReserves.Backend
             return new DateTime(year, month, dayOfMonth, 0, 0, 0, DateTimeKind.Unspecified);
         }
 
-        public async Task<WorldGoldReservesReport> RunAsync()
+        public async Task<WorldOfficialGoldHoldingReport> RunAsync()
         {
             if (Interlocked.CompareExchange(ref m_isRunning, 1, 0) != 0) throw new InvalidOperationException();
 
-            m_report = new WorldGoldReservesReport();
+            m_report = new WorldOfficialGoldHoldingReport();
             Stream xlsxStream = null;
             Workbook workbook;
             try
@@ -65,10 +65,10 @@ namespace GoldReserves.Backend
 #if DEBUG
                 {
                     var n2 = "world_official_gold_holdings_as_of_april2016_ifs.xlsx";
-                    var assem = typeof(WorldGoldReservesReportScript).Assembly;
+                    var assem = typeof(WorldOfficialGoldHoldingReportScraper).Assembly;
                     var rn = assem.GetManifestResourceNames().Single(n1 => n1.EndsWith(n2));
                     xlsxStream = assem.GetManifestResourceStream(rn);
-                    m_report.PublishDate = new DateTime(2016, 4, 1, 0, 0, 0, DateTimeKind.Unspecified);
+                    m_report.PublishTimePoint = new DateTime(2016, 4, 1, 0, 0, 0, DateTimeKind.Unspecified);
                 }
 #else
                 using (var httpClient = new HttpClient())
@@ -100,49 +100,29 @@ namespace GoldReserves.Backend
             InitializeGetNoteFunc();
             
             var i = FindIndex(m_worksheet.Rows, r => r.Cells_NonEmpty.Where(c => c.ValueUnformatted != null && c.ValueUnformatted.Trim().Equals("Tonnes", StringComparison.OrdinalIgnoreCase)).Any());
-            m_report.Entries = new List<WorldGoldReservesReportEntry>();
+            m_report.Rows = new List<WorldOfficialGoldHoldingReportRow>();
 
             while (++i < m_worksheet.Rows.Count)
             {
-                WorldGoldReservesReportEntry cl, cr;
-                cl = TryParseEntry(m_worksheet.Rows[i], 0);
-                cr = TryParseEntry(m_worksheet.Rows[i], 4);
-                if (cl != null) m_report.Entries.Add(cl);
-                if (cr != null) m_report.Entries.Add(cr);
-                if (cl == null && cr == null) break;
+                WorldOfficialGoldHoldingReportRow rl, rr;
+                rl = TryParseEntry(m_worksheet.Rows[i], 0);
+                rr = TryParseEntry(m_worksheet.Rows[i], 4);
+                if (rl != null) m_report.Rows.Add(rl);
+                if (rr != null) m_report.Rows.Add(rr);
+                if (rl == null && rr == null) break;
             }
 
 
-            var dataTimePoint = CultureInfo.InvariantCulture.Calendar.AddMonths(m_report.PublishDate, -2);
-            m_report.DataYear = dataTimePoint.Year;
-            m_report.DataQuarter = GetQuarter(dataTimePoint);
-
+            var cal = CultureInfo.InvariantCulture.Calendar;
+            var dataTimePoint = cal.AddMonths(m_report.PublishTimePoint, -2);
+            int dataTimePoint_month = cal.GetMonth(dataTimePoint);
+            m_report.DataTimePoint = new DateTime(
+                cal.GetYear(dataTimePoint), (dataTimePoint_month - 1) / 3 * 3 + 1, 1, 
+                0, 0, 0, 
+                DateTimeKind.Unspecified);
             return m_report;
         }
         
-        private static int GetQuarter(DateTime dt)
-        {
-            if (dt < GetQuarterStart(dt, 3))
-            {
-                if (dt < GetQuarterStart(dt, 2))
-                {
-                    return 1;
-                }
-                return 2;
-            }
-            if (dt < GetQuarterStart(dt, 4))
-            {
-                return 3;
-            }
-            return 4;
-        }
-
-        private static DateTime GetQuarterStart(DateTime dt, int quarter)
-        {
-            if (quarter < 1 || 4 < quarter) throw new ArgumentOutOfRangeException();
-            return new DateTime(dt.Year, 1 + (quarter - 1) * 3, 1, 0, 0, 0, dt.Kind);
-        }
-
         private void InitializeGetNoteFunc()
         {
             var textWithNotes = m_worksheet.Drawings.OfType<TextDrawing>().SingleOrDefault();
@@ -180,21 +160,21 @@ namespace GoldReserves.Backend
             }
         }
 
-        private WorldGoldReservesReportEntry TryParseEntry(Row row, int firstColumnIndex)
+        private WorldOfficialGoldHoldingReportRow TryParseEntry(Row wbRow, int firstColumnIndex)
         {
-            int firstCellIndex = FindColumn(row.Cells_NonEmpty, firstColumnIndex);
-            int lastCellIndex = FindColumn(row.Cells_NonEmpty, firstColumnIndex + 4);
+            int firstCellIndex = FindColumn(wbRow.Cells_NonEmpty, firstColumnIndex);
+            int lastCellIndex = FindColumn(wbRow.Cells_NonEmpty, firstColumnIndex + 4);
             if (lastCellIndex < 0) lastCellIndex = ~lastCellIndex;
             if (lastCellIndex - firstCellIndex != 4) return null;
             int rank;
-            if (!int.TryParse(row.Cells_NonEmpty[firstCellIndex].ValueUnformatted, NumberStyles.None, NumberFormatInfo.InvariantInfo, out rank))
+            if (!int.TryParse(wbRow.Cells_NonEmpty[firstCellIndex].ValueUnformatted, NumberStyles.None, NumberFormatInfo.InvariantInfo, out rank))
             {
                 return null;
             }
-            var e = new WorldGoldReservesReportEntry();
-            var entryNameRaw = row.Cells_NonEmpty[firstCellIndex + 1].ValueUnformatted;
-            if (entryNameRaw == null) return null;
-            var m = noteRefSuffixRegex.Match(entryNameRaw);
+            var reportRow = new WorldOfficialGoldHoldingReportRow();
+            var reportRow_nameRaw = wbRow.Cells_NonEmpty[firstCellIndex + 1].ValueUnformatted;
+            if (reportRow_nameRaw == null) return null;
+            var m = noteRefSuffixRegex.Match(reportRow_nameRaw);
             if (m.Success)
             {
                 var noteRefCapture = m.Groups[1].Captures.Cast<Capture>().Single();
@@ -202,30 +182,30 @@ namespace GoldReserves.Backend
                     noteRefCapture.Value,
                     NumberStyles.None,
                     NumberFormatInfo.InvariantInfo);
-                e.EntryName = entryNameRaw.Substring(0, noteRefCapture.Index);
+                reportRow.Name = reportRow_nameRaw.Substring(0, noteRefCapture.Index);
                 if (m_getNoteFunc == null) throw new NotImplementedException();
-                e.Note = m_getNoteFunc(noteIndex_oneBased);
+                reportRow.Note = m_getNoteFunc(noteIndex_oneBased);
             }
             else
             {
-                e.EntryName = entryNameRaw;
+                reportRow.Name = reportRow_nameRaw;
             }
             decimal t;
             if (!decimal.TryParse(
-                row.Cells_NonEmpty[firstCellIndex + 2].ValueUnformatted,
+                wbRow.Cells_NonEmpty[firstCellIndex + 2].ValueUnformatted,
                 NumberStyles.AllowDecimalPoint,
                 NumberFormatInfo.InvariantInfo, out t))
                 return null;
-            e.Tons = t;
+            reportRow.Tons = t;
             if (decimal.TryParse(
-                row.Cells_NonEmpty[firstCellIndex + 3].ValueUnformatted,
+                wbRow.Cells_NonEmpty[firstCellIndex + 3].ValueUnformatted,
                 NumberStyles.AllowDecimalPoint,
                 NumberFormatInfo.InvariantInfo,
                 out t))
             {
-                e.PortionOfReserves = t;
+                reportRow.PortionOfReserves = t;
             }
-            return e;
+            return reportRow;
         }
 
         private static int FindColumn(IReadOnlyList<Cell> cells, int columnIndex)

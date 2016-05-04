@@ -115,8 +115,6 @@
                 this.__countryIshTopographyTopoJson_xmlHttpRequest = null;
                 if (req.status !== 200) throw Error();
 
-
-
                 this.__countryIshTopographyTopoJson = JSON.parse(req.responseText);
 
                 countryGeoJson_features = topoJsonLib.feature(this.__countryIshTopographyTopoJson, this.__countryIshTopographyTopoJson.objects["units"]).features;
@@ -127,7 +125,7 @@
             __initialize: function () {
                 var req;
                 req = new XMLHttpRequest();
-                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/countryIshTopographyTopoJson.json"))");
+                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/geoRegions.topojson"))");
                 req.onreadystatechange = this.__getCountryIshTopographyTopoJson_onReadyStateChange.bind(this);
                 req.send();
                 this.__countryIshTopographyTopoJson_xmlHttpRequest = req;
@@ -153,13 +151,11 @@
                     }
                     i += 1;
                 }
-                
                 for (i = 0; i < n; i++) {
                     cvm = this.__countryViewModels[i];
                     cv = this.__appGeoMap.getCountryView(cvm.getCountry().getId_isoTwoLetterCode());
                     cv.setFillColor(colorMap.getColor(cvm.getResourceQuantity() / resourceQuantityMax));
                 }
-
             },
             __updateAppGeoMapHERootSize: function() {
                 var h, he, t;

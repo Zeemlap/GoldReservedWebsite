@@ -1,6 +1,7 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.TypeConversion;
+using GoldReserves.Data;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -134,11 +135,10 @@ namespace GoldReserves.Backend
             }
             return countryList;
         }
-
-        public async Task<WorldGoldReservesReport> GetWorldGoldReservesReportAsync()
+        
+        public async Task<WorldOfficialGoldHoldingReport> GetWorldGoldReservesReportAsync()
         {
-            return await new WorldGoldReservesReportScript().RunAsync();
+            return await new WorldOfficialGoldHoldingReportScraper().RunAsync();
         }
-
     }
 }

@@ -4,15 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7EE14300-FC63-41EA-B277-EEE07BBCF686}</ProjectGuid>
+    <ProjectGuid>{7BC32935-49AE-4BF4-9A03-5570F9A70AE8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GoldReserves.Workbooks</RootNamespace>
-    <AssemblyName>GoldReserves.Workbooks</AssemblyName>
+    <RootNamespace>GoldReserves.Data</RootNamespace>
+    <AssemblyName>GoldReserves.Data</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -20,8 +22,10 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -29,10 +33,21 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
-    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -41,18 +56,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cell.cs" />
-    <Compile Include="CellValueType.cs" />
-    <Compile Include="Drawing.cs" />
-    <Compile Include="DrawingType.cs" />
-    <Compile Include="Excel\XmlDtos.cs" />
-    <Compile Include="Paragraph.cs" />
-    <Compile Include="Row.cs" />
-    <Compile Include="Excel\ExcelWorkbookReader.cs" />
+    <Compile Include="DbUtilities.cs" />
+    <Compile Include="GeoRegion.cs" />
+    <Compile Include="GoldReservesDbContext.cs" />
+    <Compile Include="Language.cs" />
+    <Compile Include="PoliticalEntity.cs" />
+    <Compile Include="PoliticalEntityName.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TextDrawing.cs" />
-    <Compile Include="Workbook.cs" />
-    <Compile Include="Worksheet.cs" />
+    <Compile Include="WorldOfficialGoldHoldingReport.cs" />
+    <Compile Include="WorldOfficialGoldHoldingReportRow.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Repo_GitHub_Lib\Lib\Com.Jab\LibCore\LibCore.csproj">
+      <Project>{507c2621-0d0b-4109-8939-be06147540ba}</Project>
+      <Name>LibCore</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

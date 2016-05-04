@@ -193,7 +193,7 @@
     <Content Include="Scripts\bla.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
-    <Content Include="Content\countryIshTopographyTopoJson.json" />
+    <None Include="Content\geoRegions.topojson" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\fixes.js" />
     <Content Include="Scripts\geo.js" />
@@ -261,6 +261,10 @@
     <ProjectReference Include="..\GoldReserves.Backend\GoldReserves.Backend.csproj">
       <Project>{300c791c-6806-47b2-9b54-ab066843f5a2}</Project>
       <Name>GoldReserves.Backend</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GoldReserves.Data\GoldReserves.Data.csproj">
+      <Project>{7bc32935-49ae-4bf4-9a03-5570f9a70ae8}</Project>
+      <Name>GoldReserves.Data</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

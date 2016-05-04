@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.Mvc;
 using GoldReserves.Backend;
 using GoldReserves.Web.Models;
+using GoldReserves.Data;
 
 namespace GoldReserves.Web.Controllers
 {
@@ -15,18 +16,18 @@ namespace GoldReserves.Web.Controllers
 
             var countryList = new Bla().GetCountries();
             var report = new Bla().GetWorldGoldReservesReportAsync().Result;
-            var entryFromName = report.Entries.ToDictionary(e => e.EntryName);
+            var rowFromName = report.Rows.ToDictionary(e => e.Name);
             var countryViewModelList = new List<CountryViewModel>();
             foreach (var country in countryList)
             {
-                WorldGoldReservesReportEntry e;
-                entryFromName.TryGetValue(country.Name_English, out e);
-                if (e != null)
+                WorldOfficialGoldHoldingReportRow row;
+                rowFromName.TryGetValue(country.Name_English, out row);
+                if (row != null)
                 {
                     countryViewModelList.Add(new CountryViewModel()
                     {
                         Id_IsoTwoLetterCode = country.Id_IsoTwoLetterCode,
-                        ResourceQuantity = (double)e.Tons,
+                        ResourceQuantity = (double)row.Tons,
                     });
                 }
             }
