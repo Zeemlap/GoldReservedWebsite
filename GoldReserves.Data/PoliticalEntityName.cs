@@ -23,7 +23,7 @@ namespace GoldReserves.Data
             get
             {
                 if (m_nameCacheIsValid) return m_nameCache;
-                m_nameCache = DbUtilities.IndexedVarChar_Merge(NamePrefix, NameSuffix);
+                m_nameCache = DbUtil.IndexedVarChar_Merge(NamePrefix, NameSuffix);
                 m_nameCacheIsValid = true;
                 return m_nameCache;
             }
@@ -31,8 +31,8 @@ namespace GoldReserves.Data
             {
                 if (value == null) throw new ArgumentNullException();
                 string namePrefix, nameSuffix;
-                DbUtilities.IndexedVarChar_Split(value,
-                    DbUtilities.CharLength_PoliticalEntityName_NamePrefix,
+                DbUtil.IndexedVarChar_Split(value,
+                    DbUtil.CharLength_PoliticalEntityName_NamePrefix,
                     out namePrefix,
                     out nameSuffix);
                 NamePrefix = namePrefix;

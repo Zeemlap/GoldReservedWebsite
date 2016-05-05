@@ -346,10 +346,14 @@
     }, x);
 
 
-    function Color_bla(v) {
-        return v === 1 
-            ? "FF"
-            : doubleFloor(v * 256).toString(16);
+    function Color_bla(v1) {
+        var v2;
+        if (v1 < 1) {
+            v2 = doubleFloor(v1 * 256);
+            if (0xF < v2) return v2.toString(16);
+            return "0" + v2.toString(16);
+        }
+        return "FF";
     }
 
     function __Color(r, g, b, a) {

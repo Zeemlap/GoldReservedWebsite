@@ -6,6 +6,7 @@
 <script src="~/Scripts/topojson.v1.js"></script>
 <script src="~/Scripts/ieee754FloatingPointUtilities.js"></script>
 <script src="~/Scripts/geo.js"></script>
+<script src="~/Scripts/appData.js"></script>
 <script src="~/Scripts/appGeoMap.js"></script>
 <style>
     #mapPosStatic {
@@ -19,67 +20,67 @@
 </div>
 <script>
     (function () {
-        var g, x, Country, topoJsonLib, ArrayLike_findIndex;
-        g = this;
-        x = g.x;
-        ArrayLike_findIndex = x.ArrayLike_findIndex;
-        Country = x.Country;
-        topoJsonLib = g.topojson;
+        var g = this,
+            x = g.x,
+            GeoRegion = x.GeoRegion,
+            PoliticalEntity = x.PoliticalEntity,
+            topoJsonLib = g.topojson,
+            AppRepository = x.AppRepository,
+            ArrayLike_findIndex = x.ArrayLike_findIndex;
 
-        function registerCountries() {
+        x.AppRepository.getInstance().__setGeoRegions((function () {
             var c, a;
-            @{
-                int n = Model.Countries.Count;
-                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});");
+            @{{
+                int n = Model.GeoRegions.Count;
+                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});")
                 for (int i = 0; i < n; i++)
                 {
-                    var country = Model.Countries[i];
-                    @Html.Raw("c=new Country();" +
-                        $"c.__setId_isoTwoLetterCode(\"{Ajax.JavaScriptStringEncode(country.Id_IsoTwoLetterCode)}\");" +
-                        $"c.__setId_isoThreeLetterCode(\"{Ajax.JavaScriptStringEncode(country.Id_IsoThreeLetterCode)}\");" +
-                        $"c.__setName_english(\"{Ajax.JavaScriptStringEncode(country.Name_English)}\");" +
-                        $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}] = c;");
+                    var geoRegion = Model.GeoRegions[i];
+                    @Html.Raw("c=new GeoRegion();" +
+                        $"c.__setId_alpha3(\"{Ajax.JavaScriptStringEncode(geoRegion.Id_Alpha3)}\");" +
+                        $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}] = c;")
                 }
-            }
-            x.Country.__registerAll(a);
-        }
-        registerCountries();
-
-        function getCountryViewModels() {
-            var c, a;
-            @{
-                n = Model.CountryViewModels.Count;
-                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});");
-                for (int i = 0; i < n; i++)
-                {
-                    var cvm = Model.CountryViewModels[i];
-                    @Html.Raw("c=new CountryViewModel();" +
-                        $"c.__setCountry(Country.get(\"{Ajax.JavaScriptStringEncode(cvm.Id_IsoTwoLetterCode)}\"));" +
-                        $"c.__setResourceQuantity({cvm.ResourceQuantity.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});" +
-                        $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}] = c;");
-                }
-            }
+            }}
             return a;
-        }
+        })());
+        x.AppRepository.getInstance().__setPoliticalEntities((function () {
+            var t1, t2, a;
+            @{{
+                int n = Model.PoliticalEntities.Count;
+                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});")
+                for (int i = 0; i < n; i++)
+                {
+                    var p = Model.PoliticalEntities[i];
+                    @Html.Raw("t1=new PoliticalEntity();"
+                        + $"t1.__setId({p.Id.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});"
+                        + "t2={};")
+                    foreach(var pen in p.Names)
+                    {
+                        @Html.Raw($"t2[\"{Ajax.JavaScriptStringEncode(pen.Name)}\"]={pen.LanguageId.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)};")
+                    }
+                    @Html.Raw(
+                        $"t1.__setLanguageIdFromName(t2);"
+                        + (p.GeoRegionId_Alpha3 == null
+                            ? ""
+                            : $"t1.__setGeoRegion(AppRepository.getInstance().getGeoRegion(\"{Ajax.JavaScriptStringEncode(p.GeoRegionId_Alpha3)}\"));")
+                        + $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}]=t1;")
+                }
+            }}
+            return a;
+        })());
 
-        function fixCountryGeoJson_features(fa) {
-            var i, j;
-            i = ArrayLike_findIndex(fa, function (f) { return f.properties.name === "Antarctica"; });
-            if (0 <= i) fa.splice(i, 1);
-            return fa;
-        }
 
-        function CountryViewModel() {
-            this.__country = null;
+        function PoliticalEntityViewModel() {
+            this.__politicalEntity = null;
             this.__resourceQuantity = null;
             this.__color = null;
         }
-        CountryViewModel.prototype = {
-            getCountry: function () {
-                return this.__country;
+        PoliticalEntityViewModel.prototype = {
+            getPoliticalEntity: function () {
+                return this.__politicalEntity;
             },
-            __setCountry: function(value) {
-                this.__country = value;
+            __setPoliticalEntity: function (value) {
+                this.__politicalEntity = value;
             },
             getResourceQuantity: function () {
                 return this.__resourceQuantity;
@@ -95,11 +96,35 @@
             }
         };
 
+        function getPoliticalEntityViewModels() {
+            var c, a;
+            @{{
+                int n = Model.PoliticalEntityViewModels.Count;
+                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});");
+                    for (int i = 0; i < n; i++)
+                    {
+                        var cvm = Model.PoliticalEntityViewModels[i];
+                    @Html.Raw("c=new PoliticalEntityViewModel();" +
+                        $"c.__setPoliticalEntity(AppRepository.getInstance().getPoliticalEntity({cvm.PoliticalEntityId.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}));" +
+                        $"c.__setResourceQuantity({cvm.ResourceQuantity.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});" +
+                        $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}] = c;");
+                }
+            }}
+            return a;
+        }
+
+        function fixGeoRegionGeoJson_features(fa) {
+            var i, j;
+            i = ArrayLike_findIndex(fa, function (f) { return f.properties.name === "Antarctica"; });
+            if (0 <= i) fa.splice(i, 1);
+            return fa;
+        }
+
         function MyApp() {
             var i, n;
-            this.__countryIshTopographyTopoJson_xmlHttpRequest = null;
-            this.__countryIshTopographyTopoJson = null;
-            this.__countryViewModels = getCountryViewModels();
+            this.__geoRegionsTopoJson_xmlHttpRequest = null;
+            this.__geoRegionsTopoJson = null;
+            this.__politicalEntityViewModels = getPoliticalEntityViewModels();
             this.__lastVPSize = x.getViewportSize();
             this.__windowOnResize_func = this.__windowOnResize.bind(this);
             window.addEventListener("resize", this.__windowOnResize_func, false);
@@ -108,56 +133,60 @@
             this.__initialize();
         }
         MyApp.prototype = {
-            __getCountryIshTopographyTopoJson_onReadyStateChange: function () {
+            __getGeoRegionTopologyTopoJson_onReadyStateChange: function () {
                 var req, countryGeoJson_features;
-                req = this.__countryIshTopographyTopoJson_xmlHttpRequest;
+                req = this.__geoRegionsTopoJson_xmlHttpRequest;
                 if (req.readyState !== 4) return;
-                this.__countryIshTopographyTopoJson_xmlHttpRequest = null;
+                this.__geoRegionsTopoJson_xmlHttpRequest = null;
                 if (req.status !== 200) throw Error();
 
-                this.__countryIshTopographyTopoJson = JSON.parse(req.responseText);
+                this.__geoRegionsTopoJson = JSON.parse(req.responseText);
 
-                countryGeoJson_features = topoJsonLib.feature(this.__countryIshTopographyTopoJson, this.__countryIshTopographyTopoJson.objects["units"]).features;
-                countryGeoJson_features = fixCountryGeoJson_features(countryGeoJson_features);
-                this.__appGeoMap.initializeCountryTopography(countryGeoJson_features);
+                countryGeoJson_features = topoJsonLib.feature(this.__geoRegionsTopoJson, this.__geoRegionsTopoJson.objects["units"]).features;
+                countryGeoJson_features = fixGeoRegionGeoJson_features(countryGeoJson_features);
+                this.__appGeoMap.initializeGeoRegionTopography(countryGeoJson_features);
                 this.__initializeAppGeoMapCore();
             },
             __initialize: function () {
                 var req;
                 req = new XMLHttpRequest();
-                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/geoRegions.topojson"))");
-                req.onreadystatechange = this.__getCountryIshTopographyTopoJson_onReadyStateChange.bind(this);
+                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/geoRegionsTopoJson.json"))");
+                req.onreadystatechange = this.__getGeoRegionTopologyTopoJson_onReadyStateChange.bind(this);
                 req.send();
-                this.__countryIshTopographyTopoJson_xmlHttpRequest = req;
-            },
-            __initializeAppGeoMapCore: function() {
+                this.__geoRegionsTopoJson_xmlHttpRequest = req;
+                // 38.9072° N, 77.0369° W
 
-                var countryViewModels, i, n;
-                var cvm, cv, t,
+                this.__appGeoMap.
+            },
+            __initializeAppGeoMapCore: function () {
+
+                var i, n, pvm, geoRegionView, g, t,
                     colorMap = x.ColorMap.FIVE_CLASS_ORANGE,
-                    resourceQuantityMax = -1/0;
-                n = this.__countryViewModels.length;
+                    resourceQuantityMax = -1 / 0;
+                n = this.__politicalEntityViewModels.length;
                 for (i = 0; i < n;) {
-                    cvm = this.__countryViewModels[i];
-                    cv = this.__appGeoMap.getCountryView(cvm.getCountry().getId_isoTwoLetterCode());
-                    if (cv === null) {
-                        this.__countryViewModels.splice(i, 1);
+                    pvm = this.__politicalEntityViewModels[i];
+                    g = pvm.getPoliticalEntity().getGeoRegion();
+                    if (g === null) throw Error();
+                    geoRegionView = this.__appGeoMap.getGeoRegionView(g.getId_alpha3());
+                    if (geoRegionView === null) {
+                        this.__politicalEntityViewModels.splice(i, 1);
                         n -= 1;
                         continue;
                     }
-                    t = cvm.getResourceQuantity();
+                    t = pvm.getResourceQuantity();
                     if (resourceQuantityMax < t) {
                         resourceQuantityMax = t;
                     }
                     i += 1;
                 }
                 for (i = 0; i < n; i++) {
-                    cvm = this.__countryViewModels[i];
-                    cv = this.__appGeoMap.getCountryView(cvm.getCountry().getId_isoTwoLetterCode());
-                    cv.setFillColor(colorMap.getColor(cvm.getResourceQuantity() / resourceQuantityMax));
+                    pvm = this.__politicalEntityViewModels[i];
+                    geoRegionView = this.__appGeoMap.getGeoRegionView(pvm.getPoliticalEntity().getGeoRegion().getId_alpha3());
+                    geoRegionView.setFillColor(colorMap.getColor(pvm.getResourceQuantity() / resourceQuantityMax));
                 }
             },
-            __updateAppGeoMapHERootSize: function() {
+            __updateAppGeoMapHERootSize: function () {
                 var h, he, t;
                 t = 50 + 5;
                 h = this.__lastVPSize.getY() - (t + 41 + 20 + 10 + 20);

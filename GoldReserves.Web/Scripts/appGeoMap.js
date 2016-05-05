@@ -4,26 +4,26 @@
     var hasOwnPropF;
     var Vector2;
     var LatLng;
-    var Country;
+    var GeoRegion;
     var INTERNAL_KEY;
     g = this, x = g.x;
     hasOwnPropF = g.Object.prototype.hasOwnProperty;
     Vector2 = x.Vector2;
     LatLng = x.LatLng
     Color = x.Color;
-    Country = x.Country;
+    GeoRegion = x.GeoRegion;
 
     INTERNAL_KEY = {};
-    function AppGeoMap_CountryView(country, hePath) {
-        this.__country = country;
-        this.__fillColor = null;
+    function AppGeoMap_GeoRegionView(geoRegion, hePath) {
+        this.__geoRegion = geoRegion;
         this.__hePath = hePath;
         this.__key = INTERNAL_KEY;
+        this.__fillColor = null;
     }
-    AppGeoMap_CountryView.prototype = {
-        constructor: AppGeoMap_CountryView,
-        getCountry: function () {
-            return this.__country;
+    AppGeoMap_GeoRegionView.prototype = {
+        constructor: AppGeoMap_GeoRegionView,
+        getGeoRegion: function () {
+            return this.__geoRegion;
         },
         getFillColor: function () {
             return this.__fillColor === null ? null : new Color(this.__fillColor);
@@ -42,14 +42,6 @@
         }
     };
 
-
-
-    function MinMax2D() {
-        this.__minx = 1 / 0;
-        this.__maxx = -1 / 0;
-        this.__miny = 1 / 0;
-        this.__maxy = -1 / 0;
-    }
 
     function GeoProjectionContext(geoProj) {
         this.__geoProj = geoProj;
@@ -85,23 +77,30 @@
 
     var DEFAULT_FILL_COLOR = Color.fromRgb(0xE5E5E5);
 
-    function AppGeoMap(heRoot) {
-        this.__he_root = heRoot;
-        this.__he_svgRoot = x.SvgHostElement_create({
+    function AppGeoMap_Object() {
+        this.__aspectRatio = null;
+        this.__minMax2D = null;
+        this.__svgHostElem = null;
+    }
+
+    function AppGeoMap(heContainer) {
+        this.__heContainer = heContainer;
+        this.__heSvgRoot = x.SvgHostElement_create({
             type: "svg",
             xmlns: x.XMLNS_SVG,
             version: "1.1",
             "class": "app-geo-map"
         });
-        this.__he_svgGRoot = x.SvgHostElement_create({
+        this.__heG = x.SvgHostElement_create({
             type: "g"
         });
-        this.__countryViews = [];
-        this.__countryViewFromId_twoLetterIsoCode = {};
-        this.__countryTopographyAspectRatio = 0 / 0;
-        this.__he_svgRoot.appendChild(this.__he_svgGRoot);
+        this.__geoRegionViews = [];
+        this.__geoRegionViewFromId_a3 = {};
+        this.__isGeoRegionTopologyInitialized = false;
+        this.__objects = [];
+        this.__heSvgRoot.appendChild(this.__heG);
         this.__geoProj = x.NaturalEarthProjection.getInstance();
-        heRoot.appendChild(this.__he_svgRoot);
+        heRoot.appendChild(this.__heSvgRoot);
     }
     AppGeoMap.prototype = {
         constructor: AppGeoMap,
@@ -182,32 +181,32 @@
             if (v1.getY() < minMax2D.__miny) minMax2D.__miny = v1.getY();
             else if (minMax2D.__maxy < v1.getY()) minMax2D.__maxy = v1.getY();
         },
-        getCountryView: function (countryId_twoLetterIsoCode) {
+        getGeoRegionView: function (geoRegionId_alpha3) {
             var cv;
-            if (typeof countryId_twoLetterIsoCode !== "string") throw Error();
-            cv = this.__countryViewFromId_twoLetterIsoCode[countryId_twoLetterIsoCode];
+            if (typeof geoRegionId_alpha3 !== "string") throw Error();
+            cv = this.__geoRegionViewFromId_a3[geoRegionId_alpha3];
             return cv != null && cv.__key === INTERNAL_KEY
                 ? cv
                 : null;
         },
-        initializeCountryTopography: function (geoJson_features) {
+        initializeGeoRegionTopography: function (geoJson_features) {
             var feature;
             var i, n;
-            var country;
+            var geoRegion;
             var geometry;
             var hePath;
             var pathData, j, o;
-            var heG;
-            var minMax2D;
             var geoProjContext;
-            if (this.__countryTopographyAspectRatio === this.__countryTopographyAspectRatio) throw Error(); // not supported multiple maps (aspectRatio needs to be kept per map)
-            heG = x.SvgHostElement_create({
+            var obj;
+            if (this.__isGeoRegionTopologyInitialized) throw Error(); // not supported multiple maps (aspectRatio needs to be kept per map)
+            obj = new AppGeoMap_Object();
+            obj.__svgHostElem = x.SvgHostElement_create({
                 type: "g"
             });
             x.setOwnSrcPropsOnDst({
                 stroke: "#555"/*"rgb(221, 221, 221)"*/,
                 "stroke-width": "0.003"
-            }, heG.style);
+            }, obj.__svgHostElem.style);
             geoProjContext = new GeoProjectionContext(this.__geoProj);
             n = geoJson_features.length;
             for (i = 0; i < n; i++) {
@@ -233,14 +232,14 @@
                     //id: feature.properties.name + "",
                     d: pathData
                 });
-                country = Country.get(feature.id);
-                if (country !== null) {
-                    this.__countryViews.push(new AppGeoMap_CountryView(country, hePath));
+                geoRegion = x.AppRepository.getInstance().getGeoRegion(feature.id);
+                if (geoRegion !== null) {
+                    this.__geoRegionViews.push(new AppGeoMap_GeoRegionView(geoRegion, hePath));
                 }
                 x.SvgHostElement_setFillColorOnInlineStyle(hePath, DEFAULT_FILL_COLOR);
                 heG.appendChild(hePath);
             }
-            minMax2D = new MinMax2D();
+            obj.__minMax2D = new MinMax2D();
             for (i = 0; i < n; i++) {
                 feature = geoJson_features[i];
                 geoProjContext.__updateForFeature(feature);
@@ -249,40 +248,37 @@
                     case "MultiPolygon":
                         o = geometry.coordinates.length;
                         for (j = 0; j < o; j += 1) {
-                            this.__geoJsonPolygonUpdateMinMax2D(geoProjContext, geometry.coordinates[j], minMax2D);
+                            this.__geoJsonPolygonUpdateMinMax2D(geoProjContext, geometry.coordinates[j], obj.__minMax2D);
                         }
                         break;
                     case "Polygon":
-                        this.__geoJsonPolygonUpdateMinMax2D(geoProjContext, geometry.coordinates, minMax2D);
+                        this.__geoJsonPolygonUpdateMinMax2D(geoProjContext, geometry.coordinates, obj.__minMax2D);
                         break;
                     default:
                         throw Error();
                 }
             }
-            if (minMax2D.__minx === 1 / 0
-                || minMax2D.__maxx === -1 / 0
-                || minMax2D.__miny === 1 / 0
-                || minMax2D.__maxy === -1 / 0) {
+            if (obj.__minMax2D.__minx === 1 / 0
+                || obj.__minMax2D.__maxx === -1 / 0
+                || obj.__minMax2D.__miny === 1 / 0
+                || obj.__minMax2D.__maxy === -1 / 0) {
                 throw Error();
             }
-            var xExtent = minMax2D.__maxx - minMax2D.__minx;
-            var yExtent = minMax2D.__maxy - minMax2D.__miny;
-            var s = 1 / yExtent;
-            var tx = -(xExtent * 0.5 + minMax2D.__minx);
-            var ty = -(yExtent * 0.5 + minMax2D.__miny);
-            heG.setAttribute("transform", "scale(" + s + "," + s + ") translate(" + tx + "," + ty + ")");
-            this.__countryTopographyAspectRatio = xExtent * s;
-            this.__initializeCountryViewsIndexes();
+
+            obj.__aspectRatio = (obj.__minMax2D.__maxx - obj.__minMax2D.__minx) / (obj.__minMax2D.__maxy - obj.__minMax2D.__miny);
+            this.__objects.push(obj);
+            this.__initializeGeoRegionViewsIndexes();
+            this.__isGeoRegionTopologyInitialized = true;
             this.__updateLayout();
-            this.__he_svgGRoot.appendChild(heG);
+            this.__heG.appendChild(obj.__svgHostElem);
         },
-        __initializeCountryViewsIndexes: function () {
+        __initializeGeoRegionViewsIndexes: function () {
             var a, i, n, t, c;
-            a = this.__countryViews;
-            t = this.__countryViewFromId_twoLetterIsoCode;
+            a = this.__geoRegionViews;
+            t = this.__geoRegionViewFromId_a3;
             for (i = 0, n = a.length; i < n; i++) {
                 c = a[i];
-                t[c.getCountry().getId_isoTwoLetterCode()] = c;
+                t[c.getGeoRegion().getId_alpha3()] = c;
             }
         },
         notifyOfPotentialSizeChange: function () {
@@ -290,17 +286,34 @@
         },
 
         __updateLayout: function () {
-            var lsWidth, lsHeight, sx1, sy1, s, tx, ty;
-            lsWidth = this.__he_root.clientWidth;
-            lsHeight = this.__he_root.clientHeight;
-            this.__he_svgRoot.setAttribute("width", lsWidth + "");
-            this.__he_svgRoot.setAttribute("height", lsHeight + "");
-            sx1 = lsWidth / this.__countryTopographyAspectRatio;
+            var lsWidth, lsHeight;
+            lsWidth = this.__heContainer.clientWidth;
+            lsHeight = this.__heContainer.clientHeight;
+            this.__heSvgRoot.setAttribute("width", lsWidth + "");
+            this.__heSvgRoot.setAttribute("height", lsHeight + "");
+            var objects = this.__objects;
+            var n = objects.length;
+            var i;
+            if (n === 0) return;
+            var minMax2D, sx1, sy1, s, tx, ty;
+            minMax2D = new MinMax2D(this.__objects[0].__minMax2D);
+            for (i = 1; i <= n; i++) {
+
+            }
+            var xExtent = obj.__minMax2D.__maxx - obj.__minMax2D.__minx;
+            var yExtent = obj.__minMax2D.__maxy - obj.__minMax2D.__miny;
+            var s = 1 / yExtent;
+            var tx = -(xExtent * 0.5 + obj.__minMax2D.__minx);
+            var ty = -(yExtent * 0.5 + obj.__minMax2D.__miny);
+            obj.__svgHostElem.setAttribute("transform", "scale(" + s + "," + s + ") translate(" + tx + "," + ty + ")");
+
+
+            sx1 = lsWidth / this.__geoRegionTopographyAspectRatio;
             sy1 = lsHeight;
             s = Math.min(sx1, sy1);
-            tx = (lsWidth - s * this.__countryTopographyAspectRatio) * 0.5;
+            tx = (lsWidth - s * this.__geoRegionTopographyAspectRatio) * 0.5;
             ty = (lsHeight - s) * 0.5;
-            this.__he_svgGRoot.setAttribute("transform", "translate(" + tx + "," + ty + ") scale(" + s + "," + s + ") translate(" + this.__countryTopographyAspectRatio * 0.5 + ", 0.5) scale(1,-1)");
+            this.__heG.setAttribute("transform", "translate(" + tx + "," + ty + ") scale(" + s + "," + s + ") translate(" + this.__geoRegionTopographyAspectRatio * 0.5 + ", 0.5) scale(1,-1)");
         }
     };
 

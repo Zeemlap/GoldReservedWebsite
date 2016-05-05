@@ -52,7 +52,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <EmbeddedResource Include="kindOfCountries.topojson" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

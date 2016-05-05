@@ -56,7 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DbUtilities.cs" />
+    <Compile Include="DbUtil.cs" />
     <Compile Include="GeoRegion.cs" />
     <Compile Include="GoldReservesDbContext.cs" />
     <Compile Include="Language.cs" />

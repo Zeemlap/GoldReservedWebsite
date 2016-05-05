@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -81,7 +82,7 @@ namespace GoldReserves.Backend
                     getXlsxMessage.RequestUri = new Uri(urlBase + xlsxUrlPath);
                     var getXlsxTask = httpClient.SendAsync(getXlsxMessage);
                     var hostElem2 = hostElem1.QuerySelectorAll(".date-display-single").Single();
-                    m_report.PublishDate = ParsePublishDate(hostElem2.InnerText);
+                    m_report.PublishTimePoint = ParsePublishDate(hostElem2.InnerText);
                     var xlsxMessage = await getXlsxTask;
                     byte[] xlsxBytes = await xlsxMessage.Content.ReadAsByteArrayAsync();
                     xlsxStream = new MemoryStream(xlsxBytes, 0, xlsxBytes.Length, true, true);
