@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Com.Jab.LibCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -15,15 +16,22 @@ namespace GoldReserves.Data
 
         public PoliticalEntity PoliticalEntity { get; set; }
         public int PoliticalEntityId { get; set; }
-
-        public decimal PortionOfReserves { get; set; }
-
+        
         public WorldOfficialGoldHoldingReport Report { get; set; }
         internal short ReportDataTimePointInternal { get; set; }
         [NotMapped]
-        public DateTime ReportDataTimePoint { get; set; }
+        public DateTime ReportDataTimePoint
+        {
+            get
+            {
+                return new TimePointInQuarters(ReportDataTimePointInternal).ToDateTime();
+            }
+            set
+            {
+                ReportDataTimePointInternal = new TimePointInQuarters(value).Value;
+            }
+        }
 
-        public decimal Tons { get; set; }
-        public string Name { get; set; }
+        public decimal? Tons { get; set; }
     }
 }

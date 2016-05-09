@@ -44,6 +44,7 @@ namespace GoldReserves.Data
         
         public const string ColumnName_PoliticalEntityName_NameSuffix = "NameSuffix";
         public const string IndexName_PoliticalEntityName_LanguageId_NamePrefix = "IX_NamePrefix_LanguageId";
+        public const string IndexName_WorldOfficialGoldHoldingReportRow_PoliticalEntityId_ReportDataTimePointInternal = "IX_PoliticalEntityId_ReportDataTimePointInternal";
         public const string LanguageName_English = "english";
 
         internal static string IndexedVarChar_Merge(string valuePrefix, string valueSuffix)

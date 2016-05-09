@@ -346,7 +346,7 @@
     }, x);
 
 
-    function Color_bla(v1) {
+    function Color_rgbHtmlComponent(v1) {
         var v2;
         if (v1 < 1) {
             v2 = doubleFloor(v1 * 256);
@@ -356,12 +356,38 @@
         return "FF";
     }
 
-    function __Color(r, g, b, a) {
+    function hslToRgb_core(p, q, t) {
+        if (t < 1 / 2) {
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            return q;
+        }
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+    }
+
+    function __Color1(r, g, b, a) {
         this.__r = r;
         this.__g = g;
         this.__b = b;
+
+        this.__h = 0;
+        this.__s = 0;
+        this.__l = -1;
+
         this.__a = a;
     }
+    function __Color2(h, s, l, a) {
+        this.__r = 0;
+        this.__g = 0;
+        this.__b = -1;
+
+        this.__h = h;
+        this.__s = s;
+        this.__l = l;
+
+        this.__a = a;
+    }
+
     function Color(r, g, b, a) {
         var argN;
         argN = arguments.length;
@@ -372,21 +398,31 @@
                 || !isDouble01(a)) {
                 throw Error();
             }
-        } else {
-            if (!(r instanceof Color)) {
-                throw Error();
-            }
-            g = r.__g;
-            b = r.__b;
-            a = r.__a;
-            r = r.__r;
+            this.__r = r;
+            this.__g = g;
+            this.__b = b;
+
+            this.__h = 0;
+            this.__s = 0;
+            this.__l = -1;
+
+            this.__a = a;
+            return;
         }
-        this.__r = r;
-        this.__g = g;
-        this.__b = b;
-        this.__a = a;
+        if (!(r instanceof Color)) {
+            throw Error();
+        }
+        this.__r = r.__r;
+        this.__g = r.__g;
+        this.__b = r.__b;
+
+        this.__h = r.__h;
+        this.__s = r.__s;
+        this.__l = r.__l;
+
+        this.__a = r.__a;
     }
-    Color.prototype = __Color.prototype = {
+    Color.prototype = __Color1.prototype = __Color2.prototype = {
         constructor: Color,
         assign: function (r, g, b, a) {
             var argN;
@@ -398,42 +434,147 @@
                     || !isDouble01(a)) {
                     throw Error();
                 }
-            } else {
-                if (!(r instanceof Color)) {
-                    throw Error();
-                }
-                g = r.__g;
-                b = r.__b;
-                a = r.__a;
-                r = r.__r;
+                this.__r = r;
+                this.__g = g;
+                this.__b = b;
+
+                this.__h = 0;
+                this.__s = 0;
+                this.__l = -1;
+
+                this.__a = a;
+                return this;
             }
-            this.__r = r;
-            this.__g = g;
-            this.__b = b;
-            this.__a = a;
+            if (!(r instanceof Color)) {
+                throw Error();
+            }
+            this.__r = r.__r;
+            this.__g = r.__g;
+            this.__b = r.__b;
+
+            this.__h = r.__h;
+            this.__s = r.__s;
+            this.__l = r.__l;
+
+            this.__a = r.__a;
             return this;
         },
-        equals: function (o) {
-            if (o == null || o.constructor !== Color) return false;
-            return this.__r === o.__r
-                && this.__g === o.__g
-                && this.__b === o.__b
-                && this.__a === o.__a;
+        __computeHsl: function () {
+            var max, min;
+            var d, i;
+            if (this.__r <= this.__g) {
+                if (this.__g <= this.__b) {
+                    if (this.__r === this.__b) {
+                        this.__l = this.__r;
+                        return;
+                    }
+                    min = this.__r;
+                    max = this.__b;
+                    i = 2;
+                } else {
+                    min = this.__b < this.__r ? this.__b : this.__r;
+                    max = this.__g;
+                    i = 1;
+                }
+            } else {
+                if (this.__r <= this.__b) {
+                    min = this.__g;
+                    max = this.__b;
+                    i = 2;
+                } else {
+                    min = this.__g < this.__b ? this.__g : this.__b;
+                    max = this.__r;
+                    i = 0;
+                }
+            }
+            this.__l = (max + min) * 0.5;
+            d = max - min;
+            this.__s = d / (0.5 < this.__l ? (2 - (max + min)) : max + min);
+            switch (i) {
+                case 0: this.__h = (this.__g - this.__b) / d + (this.__g < this.__b ? 6 : 0); break;
+                case 1: this.__h = (this.__b - this.__r) / d + 2; break;
+                case 2: this.__h = (this.__r - this.__g) / d + 4; break;
+            }
+            this.__h /= 6;
         },
-        getR: function () { return this.__r; },
-        getG: function () { return this.__g; },
-        getB: function () { return this.__b; },
-        getA: function () { return this.__a; },
+        __computeRgb: function() {
+            var q, p, t;
+            if (this.__s !== 0) {
+                q = this.__l < 0.5 ? this.__l * (1 + this.__s) : this.__l + this.__s - this.__l * this.__s;
+                p = 2 * this.__l - q;
+                t = this.__h + 1 / 3; if (1 < t) t -= 1;
+                this.__r = hslToRgb_core(p, q, t);
+                this.__g = hslToRgb_core(p, q, this.__h);
+                t = this.__h - 1 / 3; if (t < 0) t += 1;
+                this.__b = hslToRgb_core(p, q, t);
+                return;
+            }
+            this.__r = this.__l;
+            this.__g = this.__l;
+            this.__b = this.__l;
+        },
+        equals: function (o) {
+            if (o == null || o.constructor !== Color || this.__a !== o.__a) return false;
+            if (this.__b !== -1) {
+                if (o.__b === -1) o.__computeRgb();
+                return this.__r === o.__r
+                    && this.__g === o.__g
+                    && this.__b === o.__b;
+            }
+            if (o.__l === -1) o.__computeHsl();
+            return this.__h === o.__h
+                && this.__s === o.__s
+                && this.__l === o.__l;
+        },
+
+        getR: function () {
+            if (this.__b === -1) this.__computeRgb();
+            return this.__r;
+        },
+        getG: function () {
+            if (this.__b === -1) this.__computeRgb();
+            return this.__g;
+        },
+        getB: function () {
+            if (this.__b === -1) this.__computeRgb();
+            return this.__b;
+        },
+
+        getH: function () {
+            if (this.__l === -1) this.__computeHsl();
+            return this.__h;
+        },
+        getS: function () {
+            if (this.__l === -1) this.__computeHsl();
+            return this.__s;
+        },
+        getL: function () {
+            if (this.__l === -1) this.__computeHsl();
+            return this.__l;
+        },
+
+        getA: function () {
+            return this.__a;
+        },
         toString: function (format) {
             var argN;
             argN = arguments.length;
-            if (argN === 0) format = "rgb_html";
+            if (argN === 0) format = "rgb_hexadecimal";
             switch (format) {
-                case "rgb_html":
-                    return "#" + Color_bla(this.__r) + Color_bla(this.__g) + Color_bla(this.__b);
+                case "rgb_hexadecimal":
+                    if (this.__b === -1) this.__computeRgb();
+                    return "#" + Color_rgbHtmlComponent(this.__r) + Color_rgbHtmlComponent(this.__g) + Color_rgbHtmlComponent(this.__b);
+                case "hsla_css":
+                    return "hsla(" + this.__toString_hslCssCore() + "," + this.__a + ")";            
+                case "hsl_css":
+                    return "hsl(" + this.__toString_hslCssCore() + ")";
                 default:
                     throw Error();
             }
+        },
+        __toString_hslCssCore: function () {
+            if (this.__l === -1) this.__computeHsl();
+            return this.__h * 360 + "," + this.__s * 100 + "%," + this.__l * 100 + "%";
         }
     };
     Color.fromRgb = function (v) {
@@ -442,7 +583,7 @@
         r = (v >> 16) / 256;
         g = ((v >> 8) & 0xFF) / 256;
         b = (v & 0xFF) / 256;
-        return new __Color(r, g, b, 1);
+        return new __Color1(r, g, b, 1);
     };
     Color.fromArgb = function (v) {
         var a, r, g, b;
@@ -453,10 +594,42 @@
         b = (v & 0xFF) / 256;
         return new __Color(r, g, b, a);
     };
+    Color.fromHsla = function (h, s, l, a) {
+        var argN;
+        if (!isDouble01(h)
+            || !isDouble01(s)
+            || !isDouble01(l)) {
+            throw Error();
+        }
+        argN = arguments.length;
+        if (argN < 4) a = 1;
+        else if (!isDouble01(a)) throw Error();
+        return new __Color2(h, s, l, a);
+    };
 
-    function ColorMap(colors) {
+    function __Color_interpolate(c1, c2, v) {
+        var vi;
+        if (c1.__l === -1) c1.__computeHsl();
+        if (c2.__l === -1) c2.__computeHsl();
+        vi = 1 - v;
+        return new __Color2(
+            c1.__h * vi + c2.__h * v,
+            c1.__s * vi + c2.__s * v,
+            c1.__l * vi + c2.__l * v,
+            c1.__a * vi + c2.__a * v);
+    }
+    Color.interpolate = function (c1, c2, v) {
+        if (!(c1 instanceof Color) || !(c2 instanceof Color) || !isDouble01(v)) {
+            throw Error();
+        }
+        return __Color_interpolate(c1, c2, v);
+    };
+
+    function ColorMap(colors, isStepped) {
         var i, n, c;
-        if (!isArrayLike_nonSparse(colors)) {
+        if (!isArrayLike_nonSparse(colors)
+            || colors.length === 0
+            || typeof isStepped !== "boolean") {
             throw Error();
         }
         n = colors.length;
@@ -466,32 +639,73 @@
             if (!(c instanceof Color)) throw Error();
             this.__colors[i] = new Color(c);
         }
+        this.__isStepped = isStepped;
     }
     ColorMap.prototype = {
         getColor: function (v) {
-            var i, c;
+            var i1, i2, c, cLen;
             if (!isDouble01(v)) throw Error();
             c = this.__colors;
-            i = doubleFloor(v * c.length);
-            return i < c.length
-                ? c[i]
-                : c[i - 1];
+            cLen = c.length;
+            if (this.__isStepped) {
+                i1 = doubleFloor(v * cLen);
+                return i1 < cLen
+                    ? c[i1]
+                    : c[i1 - 1];
+            }
+            i1 = v * (cLen - 1);
+            if (i1 !== cLen - 1) {
+                i2 = doubleFloor(i1);
+                return __Color_interpolate(c[i2], c[i2 + 1], i1 - i2);
+            }
+            return c[i1];
+        },
+        getIsStepped: function () {
+            return this.__isStepped;
         }
     };
 
-    ColorMap.FIVE_CLASS_ORANGE = new ColorMap([
+    ColorMap.ORANGE_FIVE_CLASS = new ColorMap([
         Color.fromRgb(0xfeedde),
         Color.fromRgb(0xfdbe85),
         Color.fromRgb(0xfd8d3c),
         Color.fromRgb(0xe6550d),
         Color.fromRgb(0xa63603)
-    ]);
+    ], true);
+    ColorMap.ORANGE = new ColorMap([
+        Color.fromRgb(0xffffcc),
+        Color.fromRgb(0xffeda0),
+        Color.fromRgb(0xfed976),
+        Color.fromRgb(0xfeb24c),
+        Color.fromRgb(0xfd8d3c),
+        Color.fromRgb(0xfc4e2a),
+        Color.fromRgb(0xe31a1c),
+        Color.fromRgb(0xbd0026),
+        Color.fromRgb(0x800026)
+    ], false);
     
+    function ColorMap_toCssLinearGradientFunction(colorMap, dir) {
+        var ca, i, n, str;
+        if (!(colorMap instanceof ColorMap)
+            || colorMap.getIsStepped()) throw Error();
+        ca = colorMap.__colors;
+        n = ca.length;
+        if (n === 1) throw Error();
+        str = "linear-gradient(" + dir;
+        for (i = 0; i < n; i++) {
+            str += "," + ca[i].toString(ca[i].getA() === 1 ? "hsl_css" : "hsla_css");
+        }
+        str += ")";
+        return str;
+    }
 
     setOwnSrcPropsOnDst({
         Color: Color,
-        ColorMap: ColorMap
+        ColorMap: ColorMap,
+        ColorMap_toCssLinearGradientFunction: ColorMap_toCssLinearGradientFunction
     }, x);
+
+
 
 
 
@@ -516,20 +730,36 @@
         return svgHostElement;
     }
 
-    function SvgHostElement_setFillColorOnInlineStyle(svgHostElement, color) {
-        if (color !== null && !(color instanceof Color)) throw Error();
-        if (color !== null) {
-            svgHostElement.style.fill = color.toString("rgb_html");
-            svgHostElement.style.fillOpacity = color.getA() + "";
+    function SvgHostElement_setFillColorOnInlineStyle(svgHostElement, v) {
+        var s;
+        if (v !== null && !(v instanceof Color)) throw Error();
+        s = svgHostElement.style;
+        if (v !== null) {
+            s.fill = v.toString("rgb_hexadecimal");
+            s.fillOpacity = v.getA() + "";
         } else {
-            svgHostElement.style.fill = "";
-            svgHostElement.style.fillOpacity = "";
+            s.fill = "";
+            s.fillOpacity = "";
+        }
+    }
+
+    function SvgHostElement_setStrokeColorOnInlineStyle(svgHostElement, v) {
+        var s;
+        if (v !== null && !(v instanceof Color)) throw Error();
+        s = svgHostElement.style;
+        if (v !== null) {
+            s.stroke = v.toString("rgb_hexadecimal");
+            s.strokeOpacity = v.getA() + "";
+        } else {
+            s.stroke = "";
+            s.strokeOpacity = "";
         }
     }
 
     setOwnSrcPropsOnDst({
         SvgHostElement_create: SvgHostElement_create,
         SvgHostElement_setFillColorOnInlineStyle: SvgHostElement_setFillColorOnInlineStyle,
+        SvgHostElement_setStrokeColorOnInlineStyle: SvgHostElement_setStrokeColorOnInlineStyle,
         XMLNS_SVG: XMLNS_SVG
     }, x);
 

@@ -44,6 +44,7 @@
     function AppRepository() {
         this.__politicalEntities = [];
         this.__politicalEntityFromId = {};
+        this.__politicalEntityFromName_uc = {};
         this.__geoRegions = [];
         this.__geoRegionFromId_alpha3 = {};
     }
@@ -55,10 +56,13 @@
             g = this.__geoRegionFromId_alpha3[id_alpha3];
             return g != null && g.__key === INTERNAL_KEY ? g : null;
         },
-        getPoliticalEntity: function (id) {
+        getPoliticalEntity: function (v) {
             var p;
-            if (!isDouble_integral(id)) throw Error();
-            p = this.__politicalEntityFromId[id];
+            if (isDouble_integral(v)) {
+                p = this.__politicalEntityFromId[v];
+            } else if (typeof v === "string") {
+                p = this.__politicalEntityFromName_uc[v.toUpperCase()];
+            }
             return p != null && p.__key === INTERNAL_KEY ? p : null;
         },
         __setGeoRegions: function (value) {
@@ -77,18 +81,34 @@
         },
         __setPoliticalEntities: function (value) {
             var fromId;
-            var i, n, p, pid;
+            var fromName_uc;
+            var i, n, p, pid, pname, j;
+            var pnames_uc;
             if (!isArrayLike_nonSparse(value)) throw Error();
             fromId = {};
+            fromName_uc = {};
+            pnames_uc = [];
             for (n = value.length, i = 0; i < n; i++) {
                 p = value[i];
                 if (!(p instanceof PoliticalEntity)) throw Error();
                 pid = p.getId();
                 if (!isDouble_integral(pid) || hasOwnPropF.call(fromId, pid)) throw Error();
+
+                j = -1;
+                for (pname in p.__languageIdFromName) {
+                    if (!hasOwnPropF.call(p.__languageIdFromName, pname)) break;    
+                    pnames_uc[++j] = pname.toUpperCase();
+                    if (hasOwnPropF.call(fromName_uc, pnames_uc[j])) throw Error();
+                }
+                while (-1 < j) {
+                    fromName_uc[pnames_uc[j]] = p;
+                    j -= 1;
+                }
                 fromId[pid] = p;
             }
             this.__politicalEntities = value;
             this.__politicalEntityFromId = fromId;
+            this.__politicalEntityFromName_uc = fromName_uc;
         }
     };
     var appRepository = new AppRepository();

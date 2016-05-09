@@ -2,6 +2,10 @@
 @{
     ViewBag.Title = "Home Page";
 }@section header {
+<link rel="stylesheet" href="~/Content/jquery-ui.min.css" />
+<link rel="stylesheet" href="~/Content/jquery-ui.structure.min.css" />
+<link rel="stylesheet" href="~/Content/jquery-ui.theme.min.css" />
+<link rel="stylesheet" href="~/Content/jquery-ui-slider-pips.css" />
 <script src="~/Scripts/fixes.js"></script>
 <script src="~/Scripts/topojson.v1.js"></script>
 <script src="~/Scripts/ieee754FloatingPointUtilities.js"></script>
@@ -12,10 +16,55 @@
     #mapPosStatic {
         margin-top: 5px;
     }
+    #mapPosStatic > .color-legend {
+        position: absolute;
+        z-index: 1;
+    }
+    .color-legend.vertical {
+        height: 300px;
+        width: 100px;
+        border: 1px solid black;
+    }
+    .color-legend .gradient {
+        height: 100%;
+        width: 100%;
+        position: relative;
+    }
+    .color-legend .gradient > .value {
+        position: absolute;
+        left: 100%;
+        margin-top: -15px;
+        font-size: 20px;
+        color: black;
+        white-space: nowrap;
+    }
+    .color-legend .gradient > .value:first-child {
+        top: -1px;
+    }
+    .color-legend .gradient > .value:first-child > :not(.dash) {
+        padding-top: 1px;
+    }
+    .color-legend .gradient > .value:last-child {
+        top: 100%;
+    }
+    .color-legend .gradient > .value > .dash {
+        height: 1px;
+        display: inline-block;
+        vertical-align: middle;
+        width: 10px;
+        background-color: black;
+    }
+    .color-legend .gradient > .value > :not(.dash) {
+        padding-left: 10px;
+    }
 </style>
 }
 <div id="mapPosStatic">
     <div id="mapPosAbs">
+    </div>
+    <div class="color-legend vertical">
+        <div class="gradient">
+        </div>
     </div>
 </div>
 <script>
@@ -26,7 +75,9 @@
             PoliticalEntity = x.PoliticalEntity,
             topoJsonLib = g.topojson,
             AppRepository = x.AppRepository,
-            ArrayLike_findIndex = x.ArrayLike_findIndex;
+            hasOwnPropF = g.Object.prototype.hasOwnProperty,
+            ArrayLike_findIndex = x.ArrayLike_findIndex,
+            COLOR_MAP = x.ColorMap.ORANGE;
 
         x.AppRepository.getInstance().__setGeoRegions((function () {
             var c, a;
@@ -96,23 +147,6 @@
             }
         };
 
-        function getPoliticalEntityViewModels() {
-            var c, a;
-            @{{
-                int n = Model.PoliticalEntityViewModels.Count;
-                @Html.Raw($"a = new Array({n.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});");
-                    for (int i = 0; i < n; i++)
-                    {
-                        var cvm = Model.PoliticalEntityViewModels[i];
-                    @Html.Raw("c=new PoliticalEntityViewModel();" +
-                        $"c.__setPoliticalEntity(AppRepository.getInstance().getPoliticalEntity({cvm.PoliticalEntityId.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}));" +
-                        $"c.__setResourceQuantity({cvm.ResourceQuantity.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)});" +
-                        $"a[{i.ToString(null, System.Globalization.NumberFormatInfo.InvariantInfo)}] = c;");
-                }
-            }}
-            return a;
-        }
-
         function fixGeoRegionGeoJson_features(fa) {
             var i, j;
             i = ArrayLike_findIndex(fa, function (f) { return f.properties.name === "Antarctica"; });
@@ -121,10 +155,11 @@
         }
 
         function MyApp() {
-            var i, n;
+            this.__ps = 0;
+            this.__politicalEntityViewModels_xmlHttpRequest = null;
             this.__geoRegionsTopoJson_xmlHttpRequest = null;
             this.__geoRegionsTopoJson = null;
-            this.__politicalEntityViewModels = getPoliticalEntityViewModels();
+            this.__politicalEntityViewModels = null;
             this.__lastVPSize = x.getViewportSize();
             this.__windowOnResize_func = this.__windowOnResize.bind(this);
             window.addEventListener("resize", this.__windowOnResize_func, false);
@@ -133,63 +168,153 @@
             this.__initialize();
         }
         MyApp.prototype = {
-            __getGeoRegionTopologyTopoJson_onReadyStateChange: function () {
-                var req, countryGeoJson_features;
-                req = this.__geoRegionsTopoJson_xmlHttpRequest;
-                if (req.readyState !== 4) return;
-                this.__geoRegionsTopoJson_xmlHttpRequest = null;
-                if (req.status !== 200) throw Error();
+            __appGeoMap_setViews: function() {
 
-                this.__geoRegionsTopoJson = JSON.parse(req.responseText);
-
-                countryGeoJson_features = topoJsonLib.feature(this.__geoRegionsTopoJson, this.__geoRegionsTopoJson.objects["units"]).features;
-                countryGeoJson_features = fixGeoRegionGeoJson_features(countryGeoJson_features);
-                this.__appGeoMap.initializeGeoRegionTopography(countryGeoJson_features);
-                this.__initializeAppGeoMapCore();
-            },
-            __initialize: function () {
-                var req;
-                req = new XMLHttpRequest();
-                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/geoRegionsTopoJson.json"))");
-                req.onreadystatechange = this.__getGeoRegionTopologyTopoJson_onReadyStateChange.bind(this);
-                req.send();
-                this.__geoRegionsTopoJson_xmlHttpRequest = req;
-                // 38.9072° N, 77.0369° W
-
-                this.__appGeoMap.
-            },
-            __initializeAppGeoMapCore: function () {
-
-                var i, n, pvm, geoRegionView, g, t,
-                    colorMap = x.ColorMap.FIVE_CLASS_ORANGE,
+                var i, n, pvm, geoRegionView, g, t, j,
                     resourceQuantityMax = -1 / 0;
                 n = this.__politicalEntityViewModels.length;
                 for (i = 0; i < n;) {
                     pvm = this.__politicalEntityViewModels[i];
-                    g = pvm.getPoliticalEntity().getGeoRegion();
-                    if (g === null) throw Error();
-                    geoRegionView = this.__appGeoMap.getGeoRegionView(g.getId_alpha3());
-                    if (geoRegionView === null) {
-                        this.__politicalEntityViewModels.splice(i, 1);
-                        n -= 1;
-                        continue;
-                    }
                     t = pvm.getResourceQuantity();
                     if (resourceQuantityMax < t) {
                         resourceQuantityMax = t;
                     }
                     i += 1;
                 }
+                var nonGeoRegionPvmFromName_uc = {};
                 for (i = 0; i < n; i++) {
                     pvm = this.__politicalEntityViewModels[i];
-                    geoRegionView = this.__appGeoMap.getGeoRegionView(pvm.getPoliticalEntity().getGeoRegion().getId_alpha3());
-                    geoRegionView.setFillColor(colorMap.getColor(pvm.getResourceQuantity() / resourceQuantityMax));
+                    g = pvm.getPoliticalEntity().getGeoRegion();
+                    if (g !== null) {
+                        geoRegionView = this.__appGeoMap.getGeoRegionView(g.getId_alpha3());
+                        geoRegionView.setFillColor(COLOR_MAP.getColor(pvm.getResourceQuantity() / resourceQuantityMax));
+                    } else {
+                        t = pvm.getPoliticalEntity().__languageIdFromName;
+                        for (j in t) {
+                            if (!hasOwnPropF.call(t, j)) break;
+                            nonGeoRegionPvmFromName_uc[j.toUpperCase()] = pvm;
+                        }
+                    }
+                }
+                // ecb
+                var c1 = this.__appGeoMap.createCircle();
+                c1.setFillColor(COLOR_MAP.getColor(nonGeoRegionPvmFromName_uc["ECB"].getResourceQuantity() / resourceQuantityMax));
+                c1.setCenterLatLng(new x.LatLng(48, -18));
+
+                // waemu
+                var c2 = this.__appGeoMap.createCircle();
+                c2.setFillColor(COLOR_MAP.getColor(nonGeoRegionPvmFromName_uc["WAEMU"].getResourceQuantity() / resourceQuantityMax));
+                //c2.setCenterLatLng(new x.LatLng(21.2237, 3.2914));
+                c2.setCenterLatLng(new x.LatLng(21.2237, -20.2914));
+                //var t = ['Niger', 'Togo', 'Senegal', 'Mali', 'Benin', 'Burkina Faso', "Côte d'Ivoire", 'Guinea-Bissau'].map(function (pen_name) {
+                //    var p;
+                //    p = AppRepository.getInstance().__politicalEntities.filter(function (p) { return p.__languageIdFromName.hasOwnProperty(pen_name); })[0];
+                //    return p.getGeoRegion().getId_alpha3();
+                //});
+                //for (i = 0, n = t.length; i < n; i++) {
+                //    this.__appGeoMap.getGeoRegionView(t[i]).setFillColor(x.Color.fromRgb(0xFF00));
+                //}
+
+                // IMF
+                var c4 = this.__appGeoMap.createCircle(0.16);
+                c4.setFillColor(COLOR_MAP.getColor(nonGeoRegionPvmFromName_uc["IMF"].getResourceQuantity() / resourceQuantityMax));
+                c4.setCenterLatLng(new x.LatLng(-45, -15));
+
+
+                // BIS
+                var c3 = this.__appGeoMap.createCircle(0.16);
+                c3.setFillColor(COLOR_MAP.getColor(nonGeoRegionPvmFromName_uc["BIS"].getResourceQuantity() / resourceQuantityMax));
+                c3.setCenterLatLng(new x.LatLng(-45, 10));
+
+                // ARUBA
+                var c5 = this.__appGeoMap.createCircle(0.03);
+                c5.setFillColor(COLOR_MAP.getColor(nonGeoRegionPvmFromName_uc["ARUBA"].getResourceQuantity() / resourceQuantityMax));
+                c5.setCenterLatLng(new x.LatLng(14, -66.280518));
+
+                var html = "", fp = 2, _10powfp = Math.pow(10, fp);
+                n = 5;
+                for (i = 0; i < n; i++) {
+                    t = Math.round(((n - i - 1) / (n - 1) * resourceQuantityMax) * _10powfp) / _10powfp;
+                    html += "<div class=\"value\"" + (i !== 0 && i !== n - 1 ? " style=\"top:" + (i * 100 / (n - 1)) + "%;\"" : "") + "><span class=\"dash\"></span><span>" + t + " " + (t === 1 ? "ton" : "tons") + "</span></div>";
+                }
+                document.querySelectorAll("#mapPosStatic > .color-legend > .gradient")[0].innerHTML = html;
+            },
+            __getGeoRegionTopologyTopoJson_onReadyStateChange: function () {
+                var req, countryGeoJson_features;
+                req = this.__geoRegionsTopoJson_xmlHttpRequest;
+                if (req.readyState !== 4) return;
+                this.__geoRegionsTopoJson_xmlHttpRequest = null;
+                if (req.status !== 200) throw Error();
+                this.__geoRegionsTopoJson = JSON.parse(req.responseText);
+                countryGeoJson_features = topoJsonLib.feature(this.__geoRegionsTopoJson, this.__geoRegionsTopoJson.objects["units"]).features;
+                countryGeoJson_features = fixGeoRegionGeoJson_features(countryGeoJson_features);
+                this.__appGeoMap.initializeGeoRegionTopography(countryGeoJson_features);
+                this.__ps |= 2;
+                if ((this.__ps & 3) === 3) {
+                    this.__appGeoMap_setViews();
                 }
             },
+            getPoliticalEntityViewModelsAsync: function (dt) {
+                var req, url;
+                if (!(dt instanceof Date)) throw Error();
+                if (this.__politicalEntityViewModels_xmlHttpRequest !== null) {
+                    this.__politicalEntityViewModels_xmlHttpRequest.onreadystatechange = null;
+                    this.__politicalEntityViewModels_xmlHttpRequest.abort();
+                    this.__politicalEntityViewModels_xmlHttpRequest = null;
+                }
+                this.__politicalEntityViewModels_xmlHttpRequest =
+                    this.__getPoliticalEntityViewModels_onReadyStateChange.bind(this);
+                url = "@Html.Raw(Ajax.JavaScriptStringEncode(Url.Action("ResourceQuantityPerPoliticalEntity")))?dataTimePoint=" + encodeURIComponent(dt.toISOString());
+                req = new XMLHttpRequest();
+                req.open("GET", url, true);
+                req.onreadystatechange = this.__getPoliticalEntityViewModels_onReadyStateChange.bind(this);
+                req.send();
+                this.__politicalEntityViewModels_xmlHttpRequest = req;
+            },
+            __getPoliticalEntityViewModels_onReadyStateChange: function () {
+                var a, b, c, d, i, n, req;
+                req = this.__politicalEntityViewModels_xmlHttpRequest;
+                if (req.readyState !== 4) return;
+                if (req.status === 200) {
+                    a = JSON.parse(req.responseText);
+                    if (!x.isArray(a)) throw Error();
+                    n = a.length;
+                    b = new Array(n);
+                    d = AppRepository.getInstance();
+                    for (i = 0; i < n; i++) {
+                        if (!x.isArrayLike_nonSparse(a[i]) || a.length < 2) throw Error();
+                        c = new PoliticalEntityViewModel();
+                        c.__setPoliticalEntity(d.getPoliticalEntity(a[i][0]));
+                        c.__setResourceQuantity(a[i][1]);
+                        b[i] = c;
+                    }
+                } else {
+                    return;
+                }
+                this.__politicalEntityViewModels = b;
+                this.__ps |= 1;
+                if ((this.__ps & 3) === 3) {
+                    this.__appGeoMap_setViews();
+                }
+            },
+            __initialize: function () {
+
+                var t1, t2;
+                var req;
+                t1 = document.querySelectorAll("#mapPosStatic > .color-legend > .gradient")[0];
+                t2 = x.ColorMap_toCssLinearGradientFunction(COLOR_MAP, "to top");
+                t1.style.backgroundImage = t2;
+                req = new XMLHttpRequest();
+                req.open("GET", "@Ajax.JavaScriptStringEncode(Url.Content("~/Content/geoRegionsTopoJson.json"))");
+                req.onreadystatechange = this.__getGeoRegionTopologyTopoJson_onReadyStateChange.bind(this);
+                req.send();
+                this.__geoRegionsTopoJson_xmlHttpRequest = req;
+            },
             __updateAppGeoMapHERootSize: function () {
-                var h, he, t;
+                var h, he, t, b;
                 t = 50 + 5;
-                h = this.__lastVPSize.getY() - (t + 41 + 20 + 10 + 20);
+                b = 41 + 20 + 10 + 20;
+                h = this.__lastVPSize.getY() - (t + b);
                 document.getElementById("mapPosStatic").style.height = h + "px";
                 he = document.getElementById("mapPosAbs");
                 he.style.position = "absolute";
@@ -197,6 +322,10 @@
                 he.style.top = t + "px";
                 he.style.left = "0";
                 he.style.width = this.__lastVPSize.getX() + "px";
+
+                he = document.querySelectorAll("#mapPosStatic > .color-legend")[0];
+                he.style.bottom = b + "px";
+                he.style.left = b + "px";
             },
             __windowOnResize: function () {
                 var vpSize;
@@ -208,7 +337,17 @@
             }
         };
 
-        new MyApp();
+        
+        window.myApp = new MyApp();
+        myApp.getPoliticalEntityViewModelsAsync(new Date());
     })();
 
 </script>
+<div id="slider"></div>
+@section scripts {
+<script src="~/Scripts/jquery-ui.min.js"></script>
+<script src="~/Scripts/jquery-ui-slider-pips.js"></script>
+<script>
+    $("#slider").slider().slider("float").slider("pips");
+</script>
+}

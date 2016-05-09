@@ -1,0 +1,24 @@
+﻿Afghanistan			Afghanistan, Islamic Republic of
+Armenia				Armenia, Republic of
+Bahrain				Bahrain, Kingdom of
+BIS					Bank for International Settlements (BIS)
+Bosnia and Herz.	Bosnia and Herzegovina
+Brunei				Brunei Darussalam
+China				China, P.R.: Mainland
+Congo				Congo, Republic of
+Czech Rep.			Czech Republic
+Dominican Rep.		Dominican Republic
+ECB					European Central Bank
+Hong Kong			China, P.R.: Hong Kong
+IMF					International Monetary Fund (IMF)
+Kyrgyzstan			Kyrgyz Republic
+Korea				Korea, Republic of
+Lao PDR				Lao People's Democratic Republic
+Macedonia			Macedonia, FYR
+Russia				Russian Federation
+Serbia				Serbia, Republic of
+Slovakia			Slovak Republic
+Syria				Syrian Arab Republic
+Venezuela			Venezuela, Republica Bolivariana de
+WAEMU				West African Economic and Monetary Union (WAEMU)
+Yemen				Yemen, Republic of

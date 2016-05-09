@@ -63,6 +63,7 @@
     <Compile Include="PoliticalEntity.cs" />
     <Compile Include="PoliticalEntityName.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TonsPerPoliticalEntity.cs" />
     <Compile Include="WorldOfficialGoldHoldingReport.cs" />
     <Compile Include="WorldOfficialGoldHoldingReportRow.cs" />
   </ItemGroup>

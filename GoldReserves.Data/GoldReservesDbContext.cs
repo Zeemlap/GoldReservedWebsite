@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Com.Jab.LibCore;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
@@ -25,6 +27,28 @@ namespace GoldReserves.Data
         public DbSet<Language> Languages { get; set; }
         public DbSet<PoliticalEntity> PoliticalEntities { get; set; }
         public DbSet<PoliticalEntityName> PoliticalEntityNames { get; set; }
+
+        public List<TonsPerPoliticalEntity> GetWorldOfficialGoldHoldings(DateTime dt_tp1)
+        {
+            var dt_tp1YearQuarter = new DateTime(dt_tp1.Year, (dt_tp1.Month - 1) / 3 * 3 + 1, 1, 0, 0, 0, 0, dt_tp1.Kind);
+            var tpq_tp1YearQuarter = new TimePointInQuarters(dt_tp1YearQuarter).Value;
+            var q1 =
+                from rr1 in (
+                    from rr in WorldOfficialGoldHoldingReportRows
+                    where rr.ReportDataTimePointInternal < tpq_tp1YearQuarter
+                    group rr by rr.PoliticalEntityId into rrGroup
+                    select new { PoliticalEntityId = rrGroup.Key, DataTimePointInternal = rrGroup.Max(rr_ => rr_.ReportDataTimePointInternal), })
+                join rr2 in WorldOfficialGoldHoldingReportRows on rr1 equals new { rr2.PoliticalEntityId, DataTimePointInternal = rr2.ReportDataTimePointInternal, }
+                select new { rr2.PoliticalEntityId, rr2.Tons };
+            var l1 = q1.ToList();
+            var l2 = l1.Select(rr => new TonsPerPoliticalEntity()
+            {
+                PoliticalEntityId = rr.PoliticalEntityId,
+                Tons = rr.Tons,
+            }).ToList();
+            return l2;
+        }
+
         public DbSet<WorldOfficialGoldHoldingReport> WorldOfficialGoldHoldingReports { get; set; }
         public DbSet<WorldOfficialGoldHoldingReportRow> WorldOfficialGoldHoldingReportRows { get; set; }
         public DbSet<GeoRegion> GeoRegions { get; set; }
@@ -93,16 +117,27 @@ namespace GoldReserves.Data
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
+
             modelBuilder
                 .Entity<WorldOfficialGoldHoldingReport>()
-                .HasKey(r => r.DataTimePointInternal);
+                .HasKey(r => r.DataTimePointInternal)
+                .Property(r => r.DataTimePointInternal)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
             modelBuilder
                 .Entity<WorldOfficialGoldHoldingReport>()
                 .Property(r => r.PublishTimePointInternal);
             modelBuilder
                 .Entity<WorldOfficialGoldHoldingReportRow>()
-                .Property(r => r.ReportDataTimePointInternal);
+                .Property(r => r.ReportDataTimePointInternal)
+                .HasColumnAnnotation(
+                    "Index", new IndexAnnotation(
+                        new IndexAttribute(DbUtil.IndexName_WorldOfficialGoldHoldingReportRow_PoliticalEntityId_ReportDataTimePointInternal) { IsUnique = true, Order = 2, }));
+            modelBuilder
+                .Entity<WorldOfficialGoldHoldingReportRow>()
+                .Property(r => r.PoliticalEntityId)
+                .HasColumnAnnotation(
+                    "Index", new IndexAnnotation(
+                        new IndexAttribute(DbUtil.IndexName_WorldOfficialGoldHoldingReportRow_PoliticalEntityId_ReportDataTimePointInternal) { IsUnique = true, Order = 1, }));
             modelBuilder
                 .Entity<WorldOfficialGoldHoldingReportRow>()
                 .HasRequired(r => r.Report)

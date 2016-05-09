@@ -1,4 +1,5 @@
-﻿using Com.Jab.LibOffice.Workbooks;
+﻿using Com.Jab.LibCore;
+using Com.Jab.LibOffice.Workbooks;
 using GoldReserves.Data;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace GoldReserves.Backend
 {
-    internal class WorldOfficialGoldHoldingReportScraper
+    internal class WorldOfficialGoldHoldingReportScraper_2016AndOnwards
     {
         private const string urlBase = "http://www.gold.org";
         private static readonly Regex dateRegex = new Regex("^([0-9]{1,2})(st|nd|rd|th) ([^ ]+) ([0-9]+)$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -21,7 +22,7 @@ namespace GoldReserves.Backend
         private int m_isRunning;
         private Worksheet m_worksheet;
         private Func<int, string> m_getNoteFunc;
-        private WorldOfficialGoldHoldingReport m_report;
+        private WorldOfficialGoldHoldingReport_Raw m_report;
 
         private static DateTime ParsePublishDate(string s)
         {
@@ -54,11 +55,11 @@ namespace GoldReserves.Backend
             return new DateTime(year, month, dayOfMonth, 0, 0, 0, DateTimeKind.Unspecified);
         }
 
-        public async Task<WorldOfficialGoldHoldingReport> RunAsync()
+        public async Task<WorldOfficialGoldHoldingReport_Raw> RunAsync()
         {
             if (Interlocked.CompareExchange(ref m_isRunning, 1, 0) != 0) throw new InvalidOperationException();
 
-            m_report = new WorldOfficialGoldHoldingReport();
+            m_report = new WorldOfficialGoldHoldingReport_Raw();
             Stream xlsxStream = null;
             Workbook workbook;
             try
@@ -66,7 +67,7 @@ namespace GoldReserves.Backend
 #if DEBUG
                 {
                     var n2 = "world_official_gold_holdings_as_of_april2016_ifs.xlsx";
-                    var assem = typeof(WorldOfficialGoldHoldingReportScraper).Assembly;
+                    var assem = typeof(WorldOfficialGoldHoldingReportScraper_2016AndOnwards).Assembly;
                     var rn = assem.GetManifestResourceNames().Single(n1 => n1.EndsWith(n2));
                     xlsxStream = assem.GetManifestResourceStream(rn);
                     m_report.PublishTimePoint = new DateTime(2016, 4, 1, 0, 0, 0, DateTimeKind.Unspecified);
@@ -100,12 +101,12 @@ namespace GoldReserves.Backend
             m_worksheet = workbook.Worksheets.Single();
             InitializeGetNoteFunc();
             
-            var i = FindIndex(m_worksheet.Rows, r => r.Cells_NonEmpty.Where(c => c.ValueUnformatted != null && c.ValueUnformatted.Trim().Equals("Tonnes", StringComparison.OrdinalIgnoreCase)).Any());
-            m_report.Rows = new List<WorldOfficialGoldHoldingReportRow>();
+            var i = m_worksheet.Rows.FindIndex(r => r.Cells_NonEmpty.Where(c => c.ValueUnformatted != null && c.ValueUnformatted.Trim().Equals("Tonnes", StringComparison.OrdinalIgnoreCase)).Any());
+            m_report.Rows = new List<WorldOfficialGoldHoldingReportRow_Raw>();
 
             while (++i < m_worksheet.Rows.Count)
             {
-                WorldOfficialGoldHoldingReportRow rl, rr;
+                WorldOfficialGoldHoldingReportRow_Raw rl, rr;
                 rl = TryParseEntry(m_worksheet.Rows[i], 0);
                 rr = TryParseEntry(m_worksheet.Rows[i], 4);
                 if (rl != null) m_report.Rows.Add(rl);
@@ -129,7 +130,7 @@ namespace GoldReserves.Backend
             var textWithNotes = m_worksheet.Drawings.OfType<TextDrawing>().SingleOrDefault();
             if (textWithNotes != null)
             {
-                int indexOfParagraphWithFirstNote = FindIndex(textWithNotes.Paragraphs, p => p.Text_Unformatted != null && p.Text_Unformatted.StartsWith("1."));
+                int indexOfParagraphWithFirstNote = textWithNotes.Paragraphs.FindIndex(p => p.Text_Unformatted != null && p.Text_Unformatted.StartsWith("1."));
                 if (0 <= indexOfParagraphWithFirstNote)
                 {
                     int j = indexOfParagraphWithFirstNote;
@@ -161,7 +162,7 @@ namespace GoldReserves.Backend
             }
         }
 
-        private WorldOfficialGoldHoldingReportRow TryParseEntry(Row wbRow, int firstColumnIndex)
+        private WorldOfficialGoldHoldingReportRow_Raw TryParseEntry(Row wbRow, int firstColumnIndex)
         {
             int firstCellIndex = FindColumn(wbRow.Cells_NonEmpty, firstColumnIndex);
             int lastCellIndex = FindColumn(wbRow.Cells_NonEmpty, firstColumnIndex + 4);
@@ -172,7 +173,7 @@ namespace GoldReserves.Backend
             {
                 return null;
             }
-            var reportRow = new WorldOfficialGoldHoldingReportRow();
+            var reportRow = new WorldOfficialGoldHoldingReportRow_Raw();
             var reportRow_nameRaw = wbRow.Cells_NonEmpty[firstCellIndex + 1].ValueUnformatted;
             if (reportRow_nameRaw == null) return null;
             var m = noteRefSuffixRegex.Match(reportRow_nameRaw);
@@ -198,14 +199,14 @@ namespace GoldReserves.Backend
                 NumberFormatInfo.InvariantInfo, out t))
                 return null;
             reportRow.Tons = t;
-            if (decimal.TryParse(
-                wbRow.Cells_NonEmpty[firstCellIndex + 3].ValueUnformatted,
-                NumberStyles.AllowDecimalPoint,
-                NumberFormatInfo.InvariantInfo,
-                out t))
-            {
-                reportRow.PortionOfReserves = t;
-            }
+            //if (decimal.TryParse(
+            //    wbRow.Cells_NonEmpty[firstCellIndex + 3].ValueUnformatted,
+            //    NumberStyles.AllowDecimalPoint,
+            //    NumberFormatInfo.InvariantInfo,
+            //    out t))
+            //{
+            //    reportRow.PortionOfReserves = t;
+            //}
             return reportRow;
         }
 
@@ -234,14 +235,6 @@ namespace GoldReserves.Backend
             return ~lo;
         }
 
-        private static int FindIndex<T>(IReadOnlyList<T> list, Func<T, bool> predicate)
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (predicate(list[i])) return i;
-            }
-            return -1;
-        }
 
     }
 }

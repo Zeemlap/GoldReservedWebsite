@@ -42,6 +42,10 @@
       <HintPath>..\packages\HtmlAgilityPack.CssSelectors.1.0.0\lib\net45\HtmlAgilityPack.CssSelectors.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="itextsharp, Version=5.5.9.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\itextsharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -55,14 +59,24 @@
     <Compile Include="Bla.cs" />
     <Compile Include="HttpClientExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WorldOfficialGoldHoldingReportScraper.cs" />
+    <Compile Include="WorldOfficialGoldHoldingReportRow_Raw.cs" />
+    <Compile Include="WorldOfficialGoldHoldingReportScraper_2016AndOnwards.cs" />
+    <Compile Include="WorldOfficialGoldHoldingReportsScraper_2000To2015.cs" />
+    <Compile Include="WorldOfficialGoldHoldingReportsScraper_UpTo2000.cs" />
+    <Compile Include="WorldOfficialGoldHoldingReport_Raw.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="annual_time_series_on_world_official_gold_reserves.pdf" />
     <None Include="app.config" />
     <None Include="packages.config" />
     <EmbeddedResource Include="world_official_gold_holdings_as_of_april2016_ifs.xlsx" />
+    <EmbeddedResource Include="quarterly_gold_and_fx_reserves_2000_2015.xlsx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Repo_GitHub_Lib\Lib\Com.Jab\LibCore\LibCore.csproj">
+      <Project>{507c2621-0d0b-4109-8939-be06147540ba}</Project>
+      <Name>LibCore</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\Repo_GitHub_Lib\Lib\Com.Jab\LibOffice\LibOffice.csproj">
       <Project>{7ee14300-fc63-41ea-b277-eee07bbcf686}</Project>
       <Name>LibOffice</Name>
@@ -71,6 +85,9 @@
       <Project>{7bc32935-49ae-4bf4-9a03-5570f9a70ae8}</Project>
       <Name>GoldReserves.Data</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="itextsharp.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

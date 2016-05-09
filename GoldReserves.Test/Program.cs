@@ -1,6 +1,10 @@
 ﻿using GoldReserves.Backend;
+using GoldReserves.Data;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Configuration;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
@@ -12,25 +16,32 @@ namespace GoldReserves.Test
     {
         static void Main(string[] args)
         {
-            var bla1 = new Bla().GetWorldGoldReservesReportAsync().Result;
-            var rowNames = bla1.Rows.Select(e => e.Name);
-            
-            var assem = typeof(Program).Assembly;
-            var rna = assem.GetManifestResourceNames();
-            var dict = new Dictionary<string, string>();
-            using (var stream = assem.GetManifestResourceStream(rna.Single(s => s.EndsWith(".topojson"))))
-            using (var textReader = new StreamReader(stream, Encoding.UTF8, false, 1024, true))
-            using (var jsonReader = new JsonTextReader(textReader))
+
+            var bla = TypeDescriptor.GetConverter(typeof(DateTime));
+
+
+            //var rl1 = Enumerable.Empty<WorldOfficialGoldHoldingReport_Raw>();
+            var rl1 = new Bla().GetWorldGoldReservesReports_UpTo2000();
+            var rl2 = Enumerable.Empty<WorldOfficialGoldHoldingReport_Raw>();
+            //var rl2 = new Bla().GetWorldGoldReservesReports_2000To2015();
+
+            var connStrSettings = ConfigurationManager.ConnectionStrings.Cast<ConnectionStringSettings>().Single(x => x.Name == "GoldReserves");
+            var connStr = connStrSettings.ConnectionString; 
+            List<string> names1;
+            using (var db = new GoldReservesDbContext(connStr))
             {
-                var jsonSer = new JsonSerializer();
-                jsonSer.Converters.Add(new Newtonsoft.Json.Converters.ExpandoObjectConverter());
-                dynamic topology = jsonSer.Deserialize<ExpandoObject>(jsonReader);
-                var geometries_d = topology.objects.units.geometries as List<object>;
-                foreach(dynamic geometry_d in geometries_d )
-                {
-                    dict.Add(geometry_d.id, geometry_d.properties.name);
-                }
+                names1 = (from pen in db.PoliticalEntityNames
+                          select pen).ToList().Select(pen => pen.Name).ToList();
             }
+            var names2 = new SortedSet<string>(rl1.SelectMany(r => r.Rows).Concat(rl2.SelectMany(r => r.Rows)).Select(r => r.Name).Distinct());
+            names2.ExceptWith(names1);
+            StringBuilder sb = new StringBuilder();
+            foreach (var name in names2)
+            {
+                sb.AppendLine(name);
+            }
+            File.WriteAllText("bla.txt", sb.ToString());
+            Console.Read();
         }
     }
 }
